@@ -1,0 +1,575 @@
+<html lang="en"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Dashboard of HQ VLANs and the three IPsec tunnels that carry them.">
+  <title>VLAN and multi-tunnel dashboard</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #121a2b;
+      --ink: #e8eef7;
+      --muted: #93a0b5;
+      --line: #243044;
+      --teal: #2dd4bf;
+      --blue: #38bdf8;
+      --amber: #fbbf24;
+      --rose: #fb7185;
+      --violet: #a5b4fc;
+      --ok: #4ade80;
+      --font: "Segoe UI", system-ui, sans-serif;
+      --mono: Consolas, "Courier New", monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.45;
+    }
+    .page { max-width: 1180px; margin: 0 auto; padding: 28px 20px 64px; }
+    a { color: var(--teal); }
+    header { display: flex; justify-content: space-between; gap: 16px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 18px; }
+    h1 { font-size: 24px; font-weight: 650; letter-spacing: -0.02em; margin: 0 0 6px; }
+    .sub { margin: 0; color: var(--muted); max-width: 640px; font-size: 14px; }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+    .stat { background: var(--panel); border: 1px solid var(--line); padding: 12px 14px; }
+    .stat b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
+    .stat span { color: var(--muted); font-size: 12px; }
+    .layout { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 14px; }
+    .panel { background: var(--panel); border: 1px solid var(--line); padding: 14px; margin-bottom: 14px; }
+    h2 { font-size: 15px; margin: 0 0 4px; }
+    .hint { color: var(--muted); font-size: 12px; margin: 0 0 12px; }
+    svg.topo { width: 100%; height: auto; display: block; }
+    .filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+    button.chip {
+      font: inherit;
+      font-size: 12px;
+      color: var(--ink);
+      background: transparent;
+      border: 1px solid var(--line);
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+    button.chip.on { border-color: var(--teal); color: var(--teal); }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 8px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { color: var(--muted); font-weight: 600; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; }
+    tr.click { cursor: pointer; }
+    tr.dim { opacity: 0.35; }
+    tr.pick td { background: #182536; }
+    .tag { font-family: var(--mono); font-size: 12px; }
+    .pill { display: inline-block; font-size: 11px; padding: 1px 6px; border: 1px solid var(--line); }
+    .pill.up { color: var(--ok); border-color: #245c3a; }
+    .pill.out { color: var(--rose); border-color: #6b3040; }
+    .matrix td, .matrix th { text-align: center; }
+    .matrix td.yes { color: var(--ok); }
+    .matrix td.no { color: var(--rose); }
+    .matrix td.hot { outline: 1px solid var(--teal); outline-offset: -1px; }
+    label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+    .lookup { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: end; }
+    input {
+      width: 100%;
+      background: #0b1220;
+      color: var(--ink);
+      border: 1px solid var(--line);
+      padding: 8px 10px;
+      font-family: var(--mono);
+      font-size: 13px;
+    }
+    button.go {
+      font: inherit;
+      background: var(--teal);
+      color: #06221e;
+      border: 0;
+      padding: 9px 14px;
+      cursor: pointer;
+      font-weight: 650;
+    }
+    .examples { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .result {
+      margin-top: 12px;
+      border: 1px solid var(--line);
+      padding: 12px;
+      font-size: 14px;
+    }
+    .result strong { font-family: var(--mono); font-weight: 600; }
+    .k { color: var(--muted); font-size: 12px; }
+    footer { color: var(--muted); font-size: 12px; margin-top: 8px; }
+    @media (max-width: 860px) {
+      .stats, .layout, .lookup { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div>
+        <h1>VLAN and multi-tunnel dashboard</h1>
+        <p class="sub">HQ switch VLANs beside the three IPsec tunnels that leave the HQ firewall. Select a VLAN or a tunnel to see which traffic is allowed across.</p>
+      </div>
+      <a href="index.html">Back to the animation</a>
+    </header>
+
+    <section class="stats" id="stats"><div class="stat"><b>4</b><span>VLANs on the HQ switch</span></div><div class="stat"><b>3</b><span>IPsec tunnels from HQ</span></div><div class="stat"><b>3 of 4</b><span>VLANs allowed into tunnels</span></div><div class="stat"><b>Up</b><span>Designed tunnel state</span></div></section>
+
+    <div class="layout">
+      <section class="panel">
+        <h2>HQ path into three tunnels</h2>
+        <p class="hint">Access VLANs share one trunk to the firewall. Policy on the firewall picks Tunnel A, B, or C from the destination subnet.</p>
+        <svg class="topo" viewBox="0 0 640 280" role="img" aria-label="HQ VLANs trunked to a firewall with three IPsec tunnels">
+          <text x="78" y="22" fill="#93a0b5" font-size="11">HQ SWITCH</text>
+          <rect x="24" y="36" width="150" height="200" fill="none" stroke="#243044"></rect>
+          <g id="vlan-nodes"><g opacity="1" style="cursor:pointer" data-vlan="10">
+          <rect x="36" y="52" width="126" height="36" fill="#0b1220" stroke="#2dd4bf"></rect>
+          <text x="46" y="67" fill="#2dd4bf" font-size="12">VLAN 10 Users</text>
+          <text x="46" y="81" fill="#93a0b5" font-size="10">10.1.1.0/24</text>
+        </g><g opacity="1" style="cursor:pointer" data-vlan="20">
+          <rect x="36" y="98" width="126" height="36" fill="#0b1220" stroke="#38bdf8"></rect>
+          <text x="46" y="113" fill="#38bdf8" font-size="12">VLAN 20 Servers</text>
+          <text x="46" y="127" fill="#93a0b5" font-size="10">10.1.2.0/24</text>
+        </g><g opacity="1" style="cursor:pointer" data-vlan="30">
+          <rect x="36" y="144" width="126" height="36" fill="#0b1220" stroke="#fb7185"></rect>
+          <text x="46" y="159" fill="#fb7185" font-size="12">VLAN 30 Guests</text>
+          <text x="46" y="173" fill="#93a0b5" font-size="10">192.168.30.0/24</text>
+        </g><g opacity="1" style="cursor:pointer" data-vlan="40">
+          <rect x="36" y="190" width="126" height="36" fill="#0b1220" stroke="#fbbf24"></rect>
+          <text x="46" y="205" fill="#fbbf24" font-size="12">VLAN 40 Voice</text>
+          <text x="46" y="219" fill="#93a0b5" font-size="10">10.1.40.0/24</text>
+        </g></g>
+          <path d="M174 136 H250" stroke="#fbbf24" fill="none" stroke-width="2"></path>
+          <text x="186" y="128" fill="#fbbf24" font-size="10">802.1Q trunk</text>
+          <rect x="250" y="96" width="120" height="80" fill="#121a2b" stroke="#a5b4fc"></rect>
+          <text x="270" y="128" fill="#e8eef7" font-size="12">HQ firewall</text>
+          <text x="262" y="146" fill="#93a0b5" font-size="10">LAN 10.1.1.1</text>
+          <text x="258" y="160" fill="#93a0b5" font-size="10">WAN 203.0.113.10</text>
+          <path id="arc-A" d="M370 116 C 450 40, 520 40, 560 70" fill="none" stroke="#2dd4bf" stroke-width="2" opacity="1"></path>
+          <path id="arc-B" d="M370 136 H560" fill="none" stroke="#38bdf8" stroke-width="2" opacity="1"></path>
+          <path id="arc-C" d="M370 156 C 450 230, 520 230, 560 200" fill="none" stroke="#a5b4fc" stroke-width="2" opacity="1"></path>
+          <g id="site-nodes"><g opacity="1" style="cursor:pointer" data-tunnel="A">
+          <rect x="548" y="62" width="80" height="36" fill="#0b1220" stroke="#2dd4bf"></rect>
+          <text x="556" y="77" fill="#2dd4bf" font-size="11">Tunnel A</text>
+          <text x="556" y="90" fill="#93a0b5" font-size="10">Branch A</text>
+        </g><g opacity="1" style="cursor:pointer" data-tunnel="B">
+          <rect x="548" y="128" width="80" height="36" fill="#0b1220" stroke="#38bdf8"></rect>
+          <text x="556" y="143" fill="#38bdf8" font-size="11">Tunnel B</text>
+          <text x="556" y="156" fill="#93a0b5" font-size="10">Branch B</text>
+        </g><g opacity="1" style="cursor:pointer" data-tunnel="C">
+          <rect x="548" y="196" width="80" height="36" fill="#0b1220" stroke="#a5b4fc"></rect>
+          <text x="556" y="211" fill="#a5b4fc" font-size="11">Tunnel C</text>
+          <text x="556" y="224" fill="#93a0b5" font-size="10">Cloud</text>
+        </g></g>
+        </svg>
+      </section>
+
+      <section class="panel">
+        <h2>Which tunnel carries this flow?</h2>
+        <p class="hint">Inner addresses only. The dashboard applies the same selectors as the animation.</p>
+        <div class="lookup">
+          <div>
+            <label for="src">Source IP</label>
+            <input id="src" value="10.1.1.50" autocomplete="off">
+          </div>
+          <div>
+            <label for="dst">Destination IP</label>
+            <input id="dst" value="10.2.1.100" autocomplete="off">
+          </div>
+          <button class="go" id="lookup" type="button">Match</button>
+        </div>
+        <div class="examples" id="examples"><button type="button" class="chip" data-src="10.1.1.50" data-dst="10.2.1.100">10.1.1.50 → 10.2.1.100</button><button type="button" class="chip" data-src="10.1.1.50" data-dst="10.3.1.50">10.1.1.50 → 10.3.1.50</button><button type="button" class="chip" data-src="10.1.2.30" data-dst="10.4.0.10">10.1.2.30 → 10.4.0.10</button><button type="button" class="chip" data-src="10.1.40.10" data-dst="10.2.1.20">10.1.40.10 → 10.2.1.20</button><button type="button" class="chip" data-src="192.168.30.50" data-dst="10.2.1.100">192.168.30.50 → 10.2.1.100</button><button type="button" class="chip" data-src="10.1.1.50" data-dst="10.1.2.30">10.1.1.50 → 10.1.2.30</button></div>
+        <div class="result" id="result"><div class="k">Tunnel A · Branch A</div>
+        Inner 10.1.1.50 → 10.2.1.100 is on VLAN 10 Users (10.1.1.0/24). Destination matches 10.2.0.0/16.
+        Outer ESP header: <strong>203.0.113.10 → 198.51.100.20</strong>.
+        Remote LAN gateway 10.2.1.1. Example host on that site: 10.2.1.100.</div>
+      </section>
+    </div>
+
+    <div class="filters" id="filters"><button type="button" class="chip on" data-kind="all" data-id="all">All</button><button type="button" class="chip" data-kind="vlan" data-id="10">VLAN 10</button><button type="button" class="chip" data-kind="vlan" data-id="20">VLAN 20</button><button type="button" class="chip" data-kind="vlan" data-id="30">VLAN 30</button><button type="button" class="chip" data-kind="vlan" data-id="40">VLAN 40</button><button type="button" class="chip" data-kind="tunnel" data-id="A">Tunnel A</button><button type="button" class="chip" data-kind="tunnel" data-id="B">Tunnel B</button><button type="button" class="chip" data-kind="tunnel" data-id="C">Tunnel C</button></div>
+
+    <section class="panel">
+      <h2>VLAN inventory</h2>
+      <p class="hint">Same switch, separate broadcast domains. Only subnets inside 10.1.0.0/16 are interesting traffic for the tunnels.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>VLAN</th>
+            <th>Name</th>
+            <th>Subnet</th>
+            <th>Gateway</th>
+            <th>Ports</th>
+            <th>Hosts</th>
+            <th>IPsec</th>
+          </tr>
+        </thead>
+        <tbody id="vlan-body"><tr class="click" data-vlan="10">
+          <td class="tag" style="color:#2dd4bf">10</td>
+          <td>Users</td>
+          <td class="tag">10.1.1.0/24</td>
+          <td class="tag">10.1.1.1</td>
+          <td>1–2 access</td>
+          <td>PC-A 10.1.1.50 · PC-B 10.1.1.20</td>
+          <td><span class="pill up">In selector</span></td>
+        </tr><tr class="click" data-vlan="20">
+          <td class="tag" style="color:#38bdf8">20</td>
+          <td>Servers</td>
+          <td class="tag">10.1.2.0/24</td>
+          <td class="tag">10.1.2.1</td>
+          <td>3–4 access</td>
+          <td>PC-C 10.1.2.30</td>
+          <td><span class="pill up">In selector</span></td>
+        </tr><tr class="click" data-vlan="30">
+          <td class="tag" style="color:#fb7185">30</td>
+          <td>Guests</td>
+          <td class="tag">192.168.30.0/24</td>
+          <td class="tag">192.168.30.1</td>
+          <td>5–6 access</td>
+          <td>Guest 192.168.30.50</td>
+          <td><span class="pill out">Excluded</span></td>
+        </tr><tr class="click" data-vlan="40">
+          <td class="tag" style="color:#fbbf24">40</td>
+          <td>Voice</td>
+          <td class="tag">10.1.40.0/24</td>
+          <td class="tag">10.1.40.1</td>
+          <td>7–8 access</td>
+          <td>Phone 10.1.40.10</td>
+          <td><span class="pill up">In selector</span></td>
+        </tr><tr>
+          <td class="tag" style="color:#fbbf24">Trunk</td>
+          <td>Uplink</td>
+          <td class="tag">tagged 10, 20, 30, 40</td>
+          <td class="tag">firewall</td>
+          <td>uplink 802.1Q</td>
+          <td>Carries every VLAN to the HQ firewall</td>
+          <td><span class="pill">L2 only</span></td>
+        </tr></tbody>
+      </table>
+    </section>
+
+    <section class="panel">
+      <h2>Multi-tunnel inventory</h2>
+      <p class="hint">One HQ firewall, three peers. Each tunnel has its own IKEv2 session, ESP keys, and remote selector.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Tunnel</th>
+            <th>Peer</th>
+            <th>Remote WAN</th>
+            <th>Selector</th>
+            <th>Remote LAN</th>
+            <th>State</th>
+          </tr>
+        </thead>
+        <tbody id="tunnel-body"><tr class="click" data-tunnel="A">
+          <td><span class="tag" style="color:#2dd4bf">A</span> Branch A</td>
+          <td>Users 10.2.1.0/24</td>
+          <td class="tag">198.51.100.20</td>
+          <td class="tag">10.1.0.0/16 ↔ 10.2.0.0/16</td>
+          <td class="tag">10.2.1.1</td>
+          <td><span class="pill up">Up · IKEv2 · ESP</span></td>
+        </tr><tr class="click" data-tunnel="B">
+          <td><span class="tag" style="color:#38bdf8">B</span> Branch B</td>
+          <td>Users 10.3.1.0/24</td>
+          <td class="tag">198.51.100.30</td>
+          <td class="tag">10.1.0.0/16 ↔ 10.3.0.0/16</td>
+          <td class="tag">10.3.1.1</td>
+          <td><span class="pill up">Up · IKEv2 · ESP</span></td>
+        </tr><tr class="click" data-tunnel="C">
+          <td><span class="tag" style="color:#a5b4fc">C</span> Cloud</td>
+          <td>Partner 10.4.0.0/24</td>
+          <td class="tag">198.51.100.40</td>
+          <td class="tag">10.1.0.0/16 ↔ 10.4.0.0/24</td>
+          <td class="tag">10.4.0.1</td>
+          <td><span class="pill up">Up · IKEv2 · ESP</span></td>
+        </tr></tbody>
+      </table>
+    </section>
+
+    <section class="panel">
+      <h2>VLAN to tunnel matrix</h2>
+      <p class="hint">A cell is yes when that VLAN subnet is inside the local selector 10.1.0.0/16. The destination still has to match that tunnel’s remote prefix.</p>
+      <table class="matrix" id="matrix"><tbody><tr><th>VLAN</th><th>Tunnel A</th><th>Tunnel B</th><th>Tunnel C</th></tr><tr><th>VLAN 10 Users</th><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td></tr><tr><th>VLAN 20 Servers</th><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td></tr><tr><th>VLAN 30 Guests</th><td class="no">No</td><td class="no">No</td><td class="no">No</td></tr><tr><th>VLAN 40 Voice</th><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td></tr></tbody></table>
+    </section>
+
+    <footer>
+      Source: example enterprise design in this project (VLAN 10/20/30/40 and Tunnels A–C). Illustrative steady state, not a live poll of a firewall.
+    </footer>
+  </div>
+
+  <script>
+    const vlans = [
+      { id: 10, name: "Users", subnet: "10.1.1.0/24", gw: "10.1.1.1", ports: "1–2 access", hosts: "PC-A 10.1.1.50 · PC-B 10.1.1.20", eligible: true, color: "#2dd4bf" },
+      { id: 20, name: "Servers", subnet: "10.1.2.0/24", gw: "10.1.2.1", ports: "3–4 access", hosts: "PC-C 10.1.2.30", eligible: true, color: "#38bdf8" },
+      { id: 30, name: "Guests", subnet: "192.168.30.0/24", gw: "192.168.30.1", ports: "5–6 access", hosts: "Guest 192.168.30.50", eligible: false, color: "#fb7185" },
+      { id: 40, name: "Voice", subnet: "10.1.40.0/24", gw: "10.1.40.1", ports: "7–8 access", hosts: "Phone 10.1.40.10", eligible: true, color: "#fbbf24" }
+    ];
+
+    const tunnels = [
+      { id: "A", name: "Branch A", peer: "198.51.100.20", remoteLan: "10.2.1.1", remoteSel: "10.2.0.0/16", example: "10.2.1.100", remoteVlans: "Users 10.2.1.0/24", color: "#2dd4bf", y: 62 },
+      { id: "B", name: "Branch B", peer: "198.51.100.30", remoteLan: "10.3.1.1", remoteSel: "10.3.0.0/16", example: "10.3.1.50", remoteVlans: "Users 10.3.1.0/24", color: "#38bdf8", y: 128 },
+      { id: "C", name: "Cloud", peer: "198.51.100.40", remoteLan: "10.4.0.1", remoteSel: "10.4.0.0/24", example: "10.4.0.10", remoteVlans: "Partner 10.4.0.0/24", color: "#a5b4fc", y: 196 }
+    ];
+
+    const LOCAL_SEL = "10.1.0.0/16";
+    const examples = [
+      ["10.1.1.50", "10.2.1.100"],
+      ["10.1.1.50", "10.3.1.50"],
+      ["10.1.2.30", "10.4.0.10"],
+      ["10.1.40.10", "10.2.1.20"],
+      ["192.168.30.50", "10.2.1.100"],
+      ["10.1.1.50", "10.1.2.30"]
+    ];
+
+    let pick = { kind: "all" };
+
+    function ipToInt(ip) {
+      const parts = ip.trim().split(".");
+      if (parts.length !== 4) return null;
+      let n = 0;
+      for (const p of parts) {
+        if (!/^\d{1,3}$/.test(p)) return null;
+        const o = Number(p);
+        if (o > 255) return null;
+        n = (n * 256 + o) >>> 0;
+      }
+      return n;
+    }
+
+    function inCidr(ip, cidr) {
+      const n = ipToInt(ip);
+      if (n === null) return false;
+      const [net, bitsRaw] = cidr.split("/");
+      const bits = Number(bitsRaw);
+      const base = ipToInt(net);
+      if (base === null || bits < 0 || bits > 32) return false;
+      const mask = bits === 0 ? 0 : (0xffffffff << (32 - bits)) >>> 0;
+      return (n & mask) === (base & mask);
+    }
+
+    function vlanOf(ip) {
+      return vlans.find((v) => inCidr(ip, v.subnet)) || null;
+    }
+
+    function tunnelsForDest(ip) {
+      return tunnels.filter((t) => inCidr(ip, t.remoteSel));
+    }
+
+    function vlanAllowedOn(vlan) {
+      return vlan.eligible;
+    }
+
+    function activeTunnelIds() {
+      if (pick.kind === "tunnel") return [pick.id];
+      return tunnels.map((t) => t.id);
+    }
+
+    function vlanVisible(v) {
+      if (pick.kind === "vlan") return v.id === pick.id;
+      if (pick.kind === "tunnel") return v.eligible;
+      return true;
+    }
+
+    function tunnelVisible(t) {
+      if (pick.kind === "tunnel") return t.id === pick.id;
+      if (pick.kind === "vlan") {
+        const v = vlans.find((x) => x.id === pick.id);
+        return v ? v.eligible : true;
+      }
+      return true;
+    }
+
+    function renderStats() {
+      const eligible = vlans.filter((v) => v.eligible).length;
+      document.getElementById("stats").innerHTML = [
+        [String(vlans.length), "VLANs on the HQ switch"],
+        [String(tunnels.length), "IPsec tunnels from HQ"],
+        [eligible + " of " + vlans.length, "VLANs allowed into tunnels"],
+        ["Up", "Designed tunnel state"]
+      ].map(([n, l]) => `<div class="stat"><b>${n}</b><span>${l}</span></div>`).join("");
+    }
+
+    function renderTopo() {
+      const vlanNodes = document.getElementById("vlan-nodes");
+      vlanNodes.innerHTML = vlans.map((v, i) => {
+        const y = 52 + i * 46;
+        const on = vlanVisible(v);
+        return `<g opacity="${on ? 1 : 0.28}" style="cursor:pointer" data-vlan="${v.id}">
+          <rect x="36" y="${y}" width="126" height="36" fill="#0b1220" stroke="${v.color}" />
+          <text x="46" y="${y + 15}" fill="${v.color}" font-size="12">VLAN ${v.id} ${v.name}</text>
+          <text x="46" y="${y + 29}" fill="#93a0b5" font-size="10">${v.subnet}</text>
+        </g>`;
+      }).join("");
+      vlanNodes.querySelectorAll("[data-vlan]").forEach((g) => {
+        g.addEventListener("click", () => toggle("vlan", Number(g.getAttribute("data-vlan"))));
+      });
+
+      document.getElementById("site-nodes").innerHTML = tunnels.map((t) => {
+        const on = tunnelVisible(t);
+        return `<g opacity="${on ? 1 : 0.28}" style="cursor:pointer" data-tunnel="${t.id}">
+          <rect x="548" y="${t.y}" width="80" height="36" fill="#0b1220" stroke="${t.color}" />
+          <text x="556" y="${t.y + 15}" fill="${t.color}" font-size="11">Tunnel ${t.id}</text>
+          <text x="556" y="${t.y + 28}" fill="#93a0b5" font-size="10">${t.name}</text>
+        </g>`;
+      }).join("");
+      document.querySelectorAll("#site-nodes [data-tunnel]").forEach((g) => {
+        g.addEventListener("click", () => toggle("tunnel", g.getAttribute("data-tunnel")));
+      });
+      tunnels.forEach((t) => {
+        const arc = document.getElementById("arc-" + t.id);
+        arc.setAttribute("opacity", tunnelVisible(t) ? "1" : "0.2");
+      });
+    }
+
+    function renderFilters() {
+      const items = [
+        { kind: "all", id: "all", label: "All" },
+        ...vlans.map((v) => ({ kind: "vlan", id: v.id, label: "VLAN " + v.id })),
+        ...tunnels.map((t) => ({ kind: "tunnel", id: t.id, label: "Tunnel " + t.id }))
+      ];
+      document.getElementById("filters").innerHTML = items.map((item) => {
+        const on = pick.kind === item.kind && (item.kind === "all" || String(pick.id) === String(item.id));
+        return `<button type="button" class="chip${on ? " on" : ""}" data-kind="${item.kind}" data-id="${item.id}">${item.label}</button>`;
+      }).join("");
+      document.querySelectorAll("#filters .chip").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const kind = btn.getAttribute("data-kind");
+          const id = btn.getAttribute("data-id");
+          if (kind === "all") pick = { kind: "all" };
+          else toggle(kind, kind === "vlan" ? Number(id) : id);
+          if (kind !== "all") return;
+          render();
+        });
+      });
+    }
+
+    function renderVlans() {
+      document.getElementById("vlan-body").innerHTML = vlans.map((v) => {
+        const picked = pick.kind === "vlan" && pick.id === v.id;
+        const dim = !vlanVisible(v);
+        return `<tr class="click${picked ? " pick" : ""}${dim ? " dim" : ""}" data-vlan="${v.id}">
+          <td class="tag" style="color:${v.color}">${v.id}</td>
+          <td>${v.name}</td>
+          <td class="tag">${v.subnet}</td>
+          <td class="tag">${v.gw}</td>
+          <td>${v.ports}</td>
+          <td>${v.hosts}</td>
+          <td><span class="pill ${v.eligible ? "up" : "out"}">${v.eligible ? "In selector" : "Excluded"}</span></td>
+        </tr>`;
+      }).join("") + `<tr>
+          <td class="tag" style="color:#fbbf24">Trunk</td>
+          <td>Uplink</td>
+          <td class="tag">tagged 10, 20, 30, 40</td>
+          <td class="tag">firewall</td>
+          <td>uplink 802.1Q</td>
+          <td>Carries every VLAN to the HQ firewall</td>
+          <td><span class="pill">L2 only</span></td>
+        </tr>`;
+      document.querySelectorAll("#vlan-body [data-vlan]").forEach((row) => {
+        row.addEventListener("click", () => toggle("vlan", Number(row.getAttribute("data-vlan"))));
+      });
+    }
+
+    function renderTunnels() {
+      document.getElementById("tunnel-body").innerHTML = tunnels.map((t) => {
+        const picked = pick.kind === "tunnel" && pick.id === t.id;
+        const dim = !tunnelVisible(t);
+        return `<tr class="click${picked ? " pick" : ""}${dim ? " dim" : ""}" data-tunnel="${t.id}">
+          <td><span class="tag" style="color:${t.color}">${t.id}</span> ${t.name}</td>
+          <td>${t.remoteVlans}</td>
+          <td class="tag">${t.peer}</td>
+          <td class="tag">${LOCAL_SEL} ↔ ${t.remoteSel}</td>
+          <td class="tag">${t.remoteLan}</td>
+          <td><span class="pill up">Up · IKEv2 · ESP</span></td>
+        </tr>`;
+      }).join("");
+      document.querySelectorAll("#tunnel-body [data-tunnel]").forEach((row) => {
+        row.addEventListener("click", () => toggle("tunnel", row.getAttribute("data-tunnel")));
+      });
+    }
+
+    function renderMatrix() {
+      const head = `<tr><th>VLAN</th>${tunnels.map((t) => `<th>Tunnel ${t.id}</th>`).join("")}</tr>`;
+      const body = vlans.map((v) => {
+        const cells = tunnels.map((t) => {
+          const yes = v.eligible;
+          const hot = (pick.kind === "vlan" && pick.id === v.id) || (pick.kind === "tunnel" && pick.id === t.id);
+          return `<td class="${yes ? "yes" : "no"}${hot && (yes || pick.kind === "vlan") ? " hot" : ""}">${yes ? "Yes" : "No"}</td>`;
+        }).join("");
+        return `<tr><th>VLAN ${v.id} ${v.name}</th>${cells}</tr>`;
+      }).join("");
+      document.getElementById("matrix").innerHTML = head + body;
+    }
+
+    function explain(src, dst) {
+      const box = document.getElementById("result");
+      if (ipToInt(src) === null || ipToInt(dst) === null) {
+        box.innerHTML = "Enter two IPv4 addresses, for example 10.1.1.50 and 10.2.1.100.";
+        return;
+      }
+      const sv = vlanOf(src);
+      const dv = vlanOf(dst);
+      const srcLabel = sv ? `VLAN ${sv.id} ${sv.name} (${sv.subnet})` : "no HQ VLAN";
+      if (inCidr(src, LOCAL_SEL) && inCidr(dst, LOCAL_SEL)) {
+        box.innerHTML = `<div class="k">Local</div> ${src} is on ${srcLabel}. ${dst} is still inside HQ ${LOCAL_SEL}${dv ? " · VLAN " + dv.id + " " + dv.name : ""}. The firewall routes between VLANs. No tunnel is used.`;
+        return;
+      }
+      if (sv && !sv.eligible) {
+        box.innerHTML = `<div class="k">Excluded</div> ${src} is on VLAN ${sv.id} ${sv.name} (${sv.subnet}), which sits outside the IPsec selector ${LOCAL_SEL}. Traffic toward ${dst} is not encrypted into Tunnel A, B, or C.`;
+        return;
+      }
+      if (!inCidr(src, LOCAL_SEL)) {
+        box.innerHTML = `<div class="k">No match</div> ${src} is not inside the local selector ${LOCAL_SEL}, so none of the three tunnels claim it.`;
+        return;
+      }
+      const hits = tunnelsForDest(dst);
+      if (!hits.length) {
+        box.innerHTML = `<div class="k">No tunnel</div> ${src} is allowed by ${LOCAL_SEL}, but ${dst} matches none of the remote selectors (10.2.0.0/16, 10.3.0.0/16, 10.4.0.0/24). It would follow the default route outside the VPNs.`;
+        return;
+      }
+      const t = hits.slice().sort((a, b) => Number(b.remoteSel.split("/")[1]) - Number(a.remoteSel.split("/")[1]))[0];
+      box.innerHTML = `<div class="k">Tunnel ${t.id} · ${t.name}</div>
+        Inner ${src} → ${dst} is on ${srcLabel}. Destination matches ${t.remoteSel}.
+        Outer ESP header: <strong>203.0.113.10 → ${t.peer}</strong>.
+        Remote LAN gateway ${t.remoteLan}. Example host on that site: ${t.example}.`;
+    }
+
+    function renderExamples() {
+      document.getElementById("examples").innerHTML = examples.map(([s, d]) =>
+        `<button type="button" class="chip" data-src="${s}" data-dst="${d}">${s} → ${d}</button>`
+      ).join("");
+      document.querySelectorAll("#examples .chip").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document.getElementById("src").value = btn.getAttribute("data-src");
+          document.getElementById("dst").value = btn.getAttribute("data-dst");
+          explain(btn.getAttribute("data-src"), btn.getAttribute("data-dst"));
+        });
+      });
+    }
+
+    function toggle(kind, id) {
+      if (pick.kind === kind && String(pick.id) === String(id)) pick = { kind: "all" };
+      else pick = { kind, id };
+      render();
+    }
+
+    function render() {
+      renderStats();
+      renderTopo();
+      renderFilters();
+      renderVlans();
+      renderTunnels();
+      renderMatrix();
+    }
+
+    document.getElementById("lookup").addEventListener("click", () => {
+      explain(document.getElementById("src").value, document.getElementById("dst").value);
+    });
+    document.getElementById("src").addEventListener("keydown", (e) => { if (e.key === "Enter") explain(e.target.value, document.getElementById("dst").value); });
+    document.getElementById("dst").addEventListener("keydown", (e) => { if (e.key === "Enter") explain(document.getElementById("src").value, e.target.value); });
+
+    renderExamples();
+    explain("10.1.1.50", "10.2.1.100");
+    render();
+  </script>
+
+
+</body></html>
