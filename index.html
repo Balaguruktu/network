@@ -1,6 +1,6 @@
 <html lang="en"><head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="description" content="Animated VLAN, IPsec, IP addressing, and network slicing tutorial with voice narration.">
   <meta name="theme-color" content="#0a1628">
   <meta name="color-scheme" content="dark">
@@ -47,6 +47,7 @@
     body {
       font-family: var(--font);
       color: var(--ink);
+      overflow-x: clip;
       background:
         radial-gradient(ellipse 80% 50% at 10% -10%, rgba(45, 212, 191, 0.18), transparent 50%),
         radial-gradient(ellipse 60% 40% at 90% 10%, rgba(56, 189, 248, 0.15), transparent 45%),
@@ -510,6 +511,9 @@
 
     .cable {
       position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
       z-index: 1;
       pointer-events: none;
     }
@@ -616,7 +620,8 @@
       position: absolute;
       top: 50%;
       transform: translateY(-50%);
-      width: 130px;
+      width: 18%;
+      max-width: 130px;
       text-align: center;
       z-index: 3;
     }
@@ -658,13 +663,13 @@
       position: absolute;
       top: 50%;
       transform: translateY(-50%);
-      width: 70px;
-      height: 70px;
+      width: clamp(42px, 10%, 70px);
+      height: clamp(42px, 10%, 70px);
       z-index: 3;
     }
 
-    .gw.left { left: 155px; }
-    .gw.right { right: 155px; }
+    .gw.left { left: 20%; }
+    .gw.right { right: 20%; }
 
     .gw .diamond {
       width: 100%;
@@ -692,7 +697,9 @@
       left: 50%;
       top: 50%;
       transform: translate(-50%, -50%);
-      width: 160px;
+      width: 22%;
+      max-width: 160px;
+      min-width: 72px;
       height: 90px;
       border: 1px dashed rgba(255, 255, 255, 0.2);
       border-radius: 50%;
@@ -708,8 +715,8 @@
 
     .tunnel-path {
       position: absolute;
-      left: 220px;
-      right: 220px;
+      left: 30%;
+      right: 30%;
       top: 50%;
       height: 40px;
       transform: translateY(-50%);
@@ -879,7 +886,8 @@
       position: absolute;
       z-index: 3;
       text-align: center;
-      min-width: 118px;
+      width: max-content;
+      max-width: 34%;
       transition: box-shadow 0.35s, transform 0.35s;
     }
 
@@ -958,7 +966,8 @@
       opacity: 0;
       transition: opacity 0.35s;
       z-index: 4;
-      white-space: nowrap;
+      max-width: 42%;
+      line-height: 1.3;
     }
 
     .tunnel-label.on { opacity: 1; }
@@ -1450,17 +1459,60 @@
     }
 
     @media (max-width: 700px) {
-      .switch { height: 320px; }
-      .gw.left { left: 120px; }
-      .gw.right { right: 120px; }
-      .tunnel-path { left: 175px; right: 175px; }
-      .site { width: 100px; }
-      .step-label { margin-left: 0; width: 100%; }
-      .compare-table { font-size: 0.78rem; }
+      .wrap { padding: 1.1rem 0.65rem 2.2rem; }
+      .panel { padding: 0.9rem 0.65rem 1.2rem; }
+      .tabs button { font-size: 0.78rem; padding: 0.55rem 0.7rem; }
+      .stage { padding: 0.55rem 0.35rem; min-height: 0; }
+      .switch { height: 248px; }
+      .learn-diag { height: 280px; }
+      .learn-diag.tall { height: 390px; }
+      .host { width: 58px; }
+      .host .pc { width: 34px; height: 26px; }
+      .host .name { font-size: 0.62rem; }
+      .host .vlan-tag, .learn-diag .host .ip-badge { font-size: 0.52rem; }
+      .host.h5 { width: 86px; bottom: 0; }
+      .switch-body { width: 96%; height: 54px; padding: 0 0.25rem; }
+      .switch-label { font-size: 0.52rem; letter-spacing: 0; }
+      .port { width: 16px; height: 14px; }
+      .port::after { inset: 3px; }
+      .ipsec-stage { height: 220px; }
+      .site { width: 24%; min-width: 0; }
+      .site .lan-box { padding: 0.4rem 0.2rem; font-size: 0.62rem; }
+      .site .label { font-size: 0.68rem; }
+      .site .sub { font-size: 0.55rem; }
+      .gw { width: 46px; height: 46px; }
+      .gw.left { left: 24%; }
+      .gw.right { right: 24%; }
+      .gw .diamond span { font-size: 0.48rem; }
+      .internet { width: 28%; height: 58px; font-size: 0.62rem; }
+      .internet small { display: none; }
+      .tunnel-path { left: 34%; right: 34%; height: 26px; }
+      .tunnel-badge { font-size: 0.55rem; top: -20px; }
+      .plain-pkt, .enc-pkt { font-size: 0.5rem; padding: 2px 4px; max-width: 46%; overflow: hidden; text-overflow: ellipsis; }
+      .step-label { margin-left: 0; width: 100%; text-align: center; }
+      .controls button { flex: 1 1 auto; }
+      .compare-table { font-size: 0.75rem; }
+      .compare-table th, .compare-table td { padding: 0.45rem; }
       .multi-stage { min-height: 480px; }
-      .net-node { min-width: 100px; font-size: 0.9em; }
-      .net-node.branch-a { left: 2%; }
-      .net-node.branch-b { right: 2%; }
+      .net-node { max-width: 33%; }
+      .net-node .box { padding: 0.35rem 0.28rem; }
+      .net-node .title { font-size: 0.68rem; }
+      .net-node .ip { font-size: 0.52rem; }
+      .net-node .box .icon { width: 26px; height: 18px; }
+      .net-node.hq { top: 1%; }
+      .net-node.branch-a { left: 0; top: 60%; bottom: auto; }
+      .net-node.branch-b { right: 0; top: 60%; bottom: auto; }
+      .net-node.cloud { left: 50%; top: 62%; bottom: auto; transform: translateX(-50%); max-width: 34%; }
+      .tunnel-label { font-size: 0.5rem; max-width: 38%; }
+      .tunnel-label.la { left: 1%; top: 40%; }
+      .tunnel-label.lb { right: 1%; left: auto; top: 40%; }
+      .tunnel-label.lc { bottom: 38%; }
+      .internet-pill { font-size: 0.62rem; padding: 0.3rem 0.55rem; }
+      .multi-pkt { font-size: 0.48rem; max-width: 62%; overflow: hidden; }
+      .policy-panel { font-size: 0.58rem; overflow-wrap: anywhere; }
+      .learn-wan { height: 76px; }
+      .learn-wan .remote-site { right: 1%; font-size: 0.62rem; }
+      .barrier-label { font-size: 0.58rem; }
     }
 
 </style>
@@ -1564,7 +1616,7 @@
             <div class="vlan-tag">Trunk (tagged)</div>
           </div>
 
-          <svg class="cable" width="100%" height="100%" viewBox="0 0 720 280" preserveAspectRatio="xMidYMid meet">
+          <svg class="cable" width="100%" height="100%" viewBox="0 0 720 280" preserveAspectRatio="none">
             <path d="M70 55 L160 120" stroke="#2dd4bf"></path>
             <path d="M200 55 L240 120" stroke="#2dd4bf"></path>
             <path d="M520 55 L480 120" stroke="#38bdf8"></path>
@@ -1979,7 +2031,7 @@
 
       <div class="stage" style="min-height: 460px;">
         <div class="multi-stage" id="multi-stage">
-          <svg class="tunnel-svg" viewBox="0 0 820 440" preserveAspectRatio="xMidYMid meet">
+          <svg class="tunnel-svg" viewBox="0 0 820 440" preserveAspectRatio="none">
             <!-- HQ to Branch A -->
             <path id="path-tunnel-a" class="tunnel-a" d="M 410 95 C 280 140, 180 220, 130 320"></path>
             <!-- HQ to Branch B -->
@@ -2158,7 +2210,7 @@
             <div class="ip-badge" id="lip-gw">LAN 10.1.1.1 · WAN 203.0.113.10</div>
           </div>
 
-          <svg class="cable" width="100%" height="100%" viewBox="0 0 720 280" preserveAspectRatio="xMidYMid meet">
+          <svg class="cable" width="100%" height="100%" viewBox="0 0 720 280" preserveAspectRatio="none">
             <path d="M70 55 L160 120" stroke="#2dd4bf"></path>
             <path d="M200 55 L240 120" stroke="#2dd4bf"></path>
             <path d="M520 55 L480 120" stroke="#38bdf8"></path>
@@ -2255,13 +2307,15 @@
       window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
     }
 
+    const touchPhone = window.matchMedia("(max-width: 700px)").matches;
+
     function speak(text) {
       return new Promise((resolve) => {
         if (!canSpeak || !voiceEnabledEl.checked || !text) {
           resolve();
           return;
         }
-        if (canSpeak) window.speechSynthesis.cancel();
+        window.speechSynthesis.cancel();
         speakingDot.classList.remove("on");
 
         const u = new SpeechSynthesisUtterance(text);
@@ -2274,19 +2328,38 @@
 
         let done = false;
         let watchdog = null;
+        let pump = null;
         const finish = () => {
           if (done) return;
           done = true;
           if (watchdog) clearTimeout(watchdog);
+          if (pump) clearInterval(pump);
           speakingDot.classList.remove("on");
           resolve();
         };
 
+        const words = text.split(/\s+/).length;
+        const cap = touchPhone
+          ? Math.min(14000, Math.max(2800, words * 260))
+          : Math.min(55000, Math.max(7000, words * 400));
+
         speakingDot.classList.add("on");
         u.onend = finish;
         u.onerror = finish;
-        watchdog = setTimeout(finish, Math.min(55000, Math.max(7000, text.split(/\s+/).length * 400)));
-        window.speechSynthesis.speak(u);
+        watchdog = setTimeout(finish, cap);
+        /* Phones pause speechSynthesis and then never fire onend. Resume it, and
+           wait a beat after cancel() or iOS drops the new utterance. */
+        pump = setInterval(() => {
+          if (done) return;
+          if (window.speechSynthesis.paused || window.speechSynthesis.speaking) {
+            window.speechSynthesis.resume();
+          }
+        }, 3000);
+        setTimeout(() => {
+          if (done) return;
+          window.speechSynthesis.speak(u);
+          window.speechSynthesis.resume();
+        }, 40);
       });
     }
 
@@ -2650,16 +2723,33 @@
       document.querySelectorAll(".cidr-table tbody tr").forEach((r) => r.classList.remove("hl"));
     }
 
-    function placeOnPath(el, pathEl, t) {
-      const stage = document.getElementById("multi-stage");
+    function pointOnPath(pathEl, t, stage) {
       const len = pathEl.getTotalLength();
       const pt = pathEl.getPointAtLength(Math.max(0, Math.min(1, t)) * len);
-      el.style.left = (pt.x / 820) * stage.clientWidth + "px";
-      el.style.top = (pt.y / 440) * stage.clientHeight + "px";
+      const svg = pathEl.ownerSVGElement;
+      const ctm = svg && svg.getScreenCTM();
+      if (ctm && svg.createSVGPoint) {
+        const p = svg.createSVGPoint();
+        p.x = pt.x;
+        p.y = pt.y;
+        const sp = p.matrixTransform(ctm);
+        const box = stage.getBoundingClientRect();
+        return { x: sp.x - box.left, y: sp.y - box.top };
+      }
+      const vb = svg && svg.viewBox && svg.viewBox.baseVal;
+      const vw = vb && vb.width ? vb.width : 820;
+      const vh = vb && vb.height ? vb.height : 440;
+      return { x: (pt.x / vw) * stage.clientWidth, y: (pt.y / vh) * stage.clientHeight };
+    }
+
+    function placeOnPath(el, pathEl, t) {
+      const stage = document.getElementById("multi-stage");
+      const pos = pointOnPath(pathEl, t, stage);
+      el.style.left = pos.x + "px";
+      el.style.top = pos.y + "px";
     }
 
     async function animateAlongPath(el, pathEl, duration, reverse) {
-      const len = pathEl.getTotalLength();
       el.style.opacity = "1";
       const start = performance.now();
       await new Promise((resolve) => {
@@ -2670,10 +2760,10 @@
           }
           const t = Math.min(1, (now - start) / duration);
           const frac = reverse ? 1 - t : t;
-          const pt = pathEl.getPointAtLength(frac * len);
           const stage = document.getElementById("multi-stage");
-          el.style.left = (pt.x / 820) * stage.clientWidth + "px";
-          el.style.top = (pt.y / 440) * stage.clientHeight + "px";
+          const pos = pointOnPath(pathEl, frac, stage);
+          el.style.left = pos.x + "px";
+          el.style.top = pos.y + "px";
           if (t < 1) requestAnimationFrame(frame);
           else resolve();
         }
