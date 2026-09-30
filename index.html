@@ -1,0 +1,3093 @@
+<html lang="en"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Animated VLAN, IPsec, IP addressing, and network slicing tutorial with voice narration.">
+  <meta name="theme-color" content="#0a1628">
+  <meta name="color-scheme" content="dark">
+  <title>VLAN, IPsec and IP addressing - Animated Concepts</title>
+  <script>
+    /* GitHub Pages project site: https://USER.github.io/REPO_NAME/ */
+    (function () {
+      var host = location.hostname;
+      if (host !== "github.io" && host.slice(-10) !== ".github.io") return;
+      var parts = location.pathname.split("/").filter(Boolean);
+      if (!parts.length) return;
+      var repo = parts[0];
+      if (/\.(html?|css|js)$/i.test(repo)) return;
+      var base = document.createElement("base");
+      base.href = location.origin + "/" + repo + "/";
+      document.head.appendChild(base);
+    })();
+  </script>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect fill='%230a1628' width='32' height='32' rx='6'/%3E%3Ctext x='16' y='22' font-size='14' fill='%232dd4bf' text-anchor='middle' font-family='sans-serif'%3EV%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg0: #0a1628;
+      --bg1: #122038;
+      --ink: #e8f0fa;
+      --muted: #8aa0b8;
+      --vlan-a: #2dd4bf;
+      --vlan-b: #38bdf8;
+      --vlan-c: #fbbf24;
+      --danger: #f87171;
+      --ok: #4ade80;
+      --ipsec: #67e8f9;
+      --tunnel: #a5b4fc;
+      --panel: rgba(18, 32, 56, 0.85);
+      --line: rgba(232, 240, 250, 0.12);
+      --font: "Outfit", system-ui, -apple-system, "Segoe UI", sans-serif;
+      --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font);
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse 80% 50% at 10% -10%, rgba(45, 212, 191, 0.18), transparent 50%),
+        radial-gradient(ellipse 60% 40% at 90% 10%, rgba(56, 189, 248, 0.15), transparent 45%),
+        radial-gradient(ellipse 50% 30% at 50% 100%, rgba(165, 180, 252, 0.12), transparent 50%),
+        linear-gradient(165deg, var(--bg0), #0d1a2e 40%, var(--bg1));
+      min-height: 100vh;
+      line-height: 1.55;
+    }
+
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2.5rem 1.25rem 4rem;
+    }
+
+    header.hero {
+      text-align: center;
+      margin-bottom: 2.5rem;
+      animation: fadeUp 0.7s ease both;
+    }
+
+    header.hero h1 {
+      font-size: clamp(1.85rem, 4vw, 2.75rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+
+    header.hero h1 span {
+      background: linear-gradient(90deg, var(--vlan-a), var(--vlan-b), var(--tunnel));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    header.hero p {
+      color: var(--muted);
+      font-size: 1.05rem;
+      max-width: 40rem;
+      margin: 0 auto 1.25rem;
+    }
+
+    header.hero a {
+      color: var(--vlan-a);
+    }
+
+    .voice-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 1.1rem;
+    }
+
+    .voice-bar label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-size: 0.88rem;
+      color: var(--muted);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .voice-bar input[type="checkbox"] {
+      width: 1.05rem;
+      height: 1.05rem;
+      accent-color: var(--vlan-a);
+      cursor: pointer;
+    }
+
+    .speaking-dot {
+      display: none;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--vlan-a);
+    }
+
+    .speaking-dot.on { display: inline-flex; }
+
+    .speaking-dot i {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--vlan-a);
+      animation: pulseDot 0.9s ease-in-out infinite;
+    }
+
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.35; transform: scale(0.75); }
+    }
+
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .tabs button {
+      font-family: var(--font);
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 0.65rem 1.35rem;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--muted);
+      cursor: pointer;
+      transition: color 0.2s, background 0.2s, border-color 0.2s;
+    }
+
+    .tabs button:hover {
+      color: var(--ink);
+      border-color: rgba(232, 240, 250, 0.25);
+    }
+
+    .tabs button.active {
+      color: var(--bg0);
+      background: linear-gradient(120deg, var(--vlan-a), var(--vlan-b));
+      border-color: transparent;
+    }
+
+    .panel {
+      display: none;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 1.25rem;
+      padding: 1.5rem 1.25rem 1.75rem;
+      backdrop-filter: blur(12px);
+      animation: fadeUp 0.45s ease both;
+    }
+
+    .panel.active { display: block; }
+
+    .panel h2 {
+      font-size: 1.45rem;
+      margin-bottom: 0.35rem;
+    }
+
+    .panel .lead {
+      color: var(--muted);
+      margin-bottom: 1.1rem;
+      max-width: 48rem;
+    }
+
+    .info-grid {
+      display: grid;
+      gap: 0.75rem;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      margin-bottom: 1.35rem;
+    }
+
+    .info-grid article {
+      padding: 0.85rem 1rem;
+      border-radius: 0.75rem;
+      background: rgba(0, 0, 0, 0.22);
+      border: 1px solid var(--line);
+    }
+
+    .info-grid h3 {
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--vlan-a);
+      margin-bottom: 0.35rem;
+    }
+
+    #ipsec-panel .info-grid h3 { color: var(--tunnel); }
+    #compare-panel .info-grid h3 { color: var(--vlan-b); }
+
+    .info-grid p, .info-grid ul {
+      font-size: 0.84rem;
+      color: var(--muted);
+    }
+
+    .info-grid ul {
+      padding-left: 1.1rem;
+      margin-top: 0.25rem;
+    }
+
+    .info-grid li { margin: 0.2rem 0; }
+
+    .stage {
+      position: relative;
+      background:
+        repeating-linear-gradient(0deg, transparent, transparent 23px, rgba(255, 255, 255, 0.03) 24px),
+        repeating-linear-gradient(90deg, transparent, transparent 23px, rgba(255, 255, 255, 0.03) 24px),
+        rgba(0, 0, 0, 0.25);
+      border-radius: 1rem;
+      border: 1px solid var(--line);
+      min-height: 340px;
+      padding: 1.25rem;
+      overflow: hidden;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-top: 1.1rem;
+      align-items: center;
+    }
+
+    .controls button {
+      font-family: var(--font);
+      font-size: 0.88rem;
+      font-weight: 600;
+      padding: 0.55rem 1rem;
+      border-radius: 0.55rem;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--ink);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .controls button:hover { background: rgba(255, 255, 255, 0.12); }
+
+    .controls button.primary {
+      background: linear-gradient(120deg, #14b8a6, #0ea5e9);
+      border: none;
+      color: #042f2e;
+    }
+
+    .step-label {
+      font-family: var(--font);
+      font-size: 0.88rem;
+      font-weight: 500;
+      padding: 0.55rem 1rem;
+      border-radius: 0.55rem;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--muted);
+      margin-left: auto;
+    }
+
+    .caption {
+      margin-top: 1rem;
+      padding: 0.9rem 1rem;
+      border-left: 3px solid var(--vlan-a);
+      background: rgba(45, 212, 191, 0.08);
+      border-radius: 0 0.5rem 0.5rem 0;
+      font-size: 0.95rem;
+      min-height: 3.2rem;
+    }
+
+    #ipsec-panel .caption {
+      border-left-color: var(--tunnel);
+      background: rgba(165, 180, 252, 0.1);
+    }
+
+    .section-title {
+      font-size: 1.05rem;
+      margin: 1.5rem 0 0.75rem;
+      color: var(--ink);
+    }
+
+    .key-points {
+      display: grid;
+      gap: 0.65rem;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+
+    .key-points article {
+      padding: 0.75rem 0.9rem;
+      border-radius: 0.65rem;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--line);
+    }
+
+    .key-points h3 {
+      font-size: 0.85rem;
+      margin-bottom: 0.25rem;
+      color: var(--vlan-a);
+    }
+
+    #ipsec-panel .key-points h3 { color: var(--tunnel); }
+
+    .key-points p {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .glossary {
+      display: grid;
+      gap: 0.55rem;
+    }
+
+    .glossary dt {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: var(--vlan-c);
+      margin-top: 0.35rem;
+    }
+
+    #ipsec-panel .glossary dt { color: var(--ipsec); }
+
+    .glossary dd {
+      font-size: 0.84rem;
+      color: var(--muted);
+      padding-left: 0.15rem;
+    }
+
+    .compare-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.86rem;
+      margin-top: 0.5rem;
+    }
+
+    .compare-table th,
+    .compare-table td {
+      border: 1px solid var(--line);
+      padding: 0.65rem 0.75rem;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .compare-table th {
+      background: rgba(0, 0, 0, 0.3);
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    .compare-table td { color: var(--muted); }
+    .compare-table tr:nth-child(even) td { background: rgba(255, 255, 255, 0.02); }
+
+    .note {
+      margin-top: 1rem;
+      padding: 0.85rem 1rem;
+      border-radius: 0.65rem;
+      border: 1px dashed rgba(251, 191, 36, 0.35);
+      background: rgba(251, 191, 36, 0.06);
+      font-size: 0.84rem;
+      color: var(--muted);
+    }
+
+    .note strong { color: var(--vlan-c); }
+
+    /* VLAN stage */
+    .switch {
+      position: relative;
+      margin: 0 auto;
+      width: min(100%, 720px);
+      height: 280px;
+    }
+
+    .switch-body {
+      position: absolute;
+      left: 50%;
+      top: 42%;
+      transform: translate(-50%, -50%);
+      width: 78%;
+      height: 72px;
+      background: linear-gradient(180deg, #1e3a5f, #152a45);
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: space-evenly;
+      padding: 0 1rem;
+      z-index: 2;
+    }
+
+    .switch-label {
+      position: absolute;
+      top: 8px;
+      left: 14px;
+      font-size: 0.7rem;
+      font-family: var(--mono);
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+
+    .port {
+      width: 36px;
+      height: 28px;
+      border-radius: 4px;
+      background: #0a1628;
+      border: 2px solid #334;
+      position: relative;
+      transition: border-color 0.4s, box-shadow 0.4s;
+    }
+
+    .port::after {
+      content: "";
+      position: absolute;
+      inset: 5px;
+      border-radius: 2px;
+      background: #1a2a40;
+      transition: background 0.4s;
+    }
+
+    .port.vlan10 { border-color: var(--vlan-a); box-shadow: 0 0 12px rgba(45, 212, 191, 0.45); }
+    .port.vlan10::after { background: var(--vlan-a); }
+    .port.vlan20 { border-color: var(--vlan-b); box-shadow: 0 0 12px rgba(56, 189, 248, 0.45); }
+    .port.vlan20::after { background: var(--vlan-b); }
+    .port.trunk { border-color: var(--vlan-c); box-shadow: 0 0 12px rgba(251, 191, 36, 0.4); }
+    .port.trunk::after {
+      background: repeating-linear-gradient(90deg, var(--vlan-a) 0 4px, var(--vlan-b) 4px 8px, var(--vlan-c) 8px 12px);
+    }
+
+    .host {
+      position: absolute;
+      width: 88px;
+      text-align: center;
+      z-index: 3;
+    }
+
+    .host .pc {
+      width: 52px;
+      height: 40px;
+      margin: 0 auto 4px;
+      background: #1a2f4a;
+      border: 2px solid currentColor;
+      border-radius: 6px;
+      position: relative;
+    }
+
+    .host .pc::after {
+      content: "";
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 24px;
+      height: 6px;
+      background: currentColor;
+      border-radius: 0 0 3px 3px;
+      opacity: 0.7;
+    }
+
+    .host .name { font-size: 0.78rem; font-weight: 600; }
+
+    .host .vlan-tag {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+
+    .host.show-tag .vlan-tag { opacity: 1; }
+
+    .host.h1 { left: 4%; top: 8%; color: var(--vlan-a); }
+    .host.h2 { left: 22%; top: 8%; color: var(--vlan-a); }
+    .host.h3 { right: 22%; top: 8%; color: var(--vlan-b); }
+    .host.h4 { right: 4%; top: 8%; color: var(--vlan-b); }
+    .host.h5 {
+      left: 50%;
+      bottom: 4%;
+      transform: translateX(-50%);
+      color: var(--vlan-c);
+      width: 110px;
+    }
+
+    .cable {
+      position: absolute;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .cable path {
+      fill: none;
+      stroke-width: 2.5;
+      stroke-dasharray: 6 4;
+      opacity: 0.55;
+      animation: dashMove 1.2s linear infinite;
+    }
+
+    .packet {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      z-index: 5;
+      opacity: 0;
+      box-shadow: 0 0 10px currentColor;
+    }
+
+    .packet.tagged::before {
+      content: "TAG";
+      position: absolute;
+      top: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.55rem;
+      font-family: var(--mono);
+      white-space: nowrap;
+      color: var(--vlan-c);
+    }
+
+    .barrier {
+      position: absolute;
+      left: 50%;
+      top: 18%;
+      width: 3px;
+      height: 55%;
+      background: repeating-linear-gradient(180deg, var(--danger) 0 8px, transparent 8px 14px);
+      transform: translateX(-50%) scaleY(0);
+      transform-origin: top;
+      opacity: 0;
+      z-index: 4;
+      transition: transform 0.5s, opacity 0.5s;
+    }
+
+    .barrier.on {
+      transform: translateX(-50%) scaleY(1);
+      opacity: 0.85;
+    }
+
+    .barrier-label {
+      position: absolute;
+      left: 50%;
+      top: 12%;
+      transform: translateX(-50%);
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--danger);
+      opacity: 0;
+      transition: opacity 0.4s;
+      white-space: nowrap;
+      z-index: 4;
+    }
+
+    .barrier-label.on { opacity: 1; }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 0.75rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .legend span::before {
+      content: "";
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    .legend .l10::before { background: var(--vlan-a); }
+    .legend .l20::before { background: var(--vlan-b); }
+    .legend .ltrunk::before {
+      background: linear-gradient(90deg, var(--vlan-a), var(--vlan-b), var(--vlan-c));
+    }
+
+    /* IPsec stage */
+    .ipsec-stage {
+      width: min(100%, 760px);
+      margin: 0 auto;
+      height: 300px;
+      position: relative;
+    }
+
+    .site {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 130px;
+      text-align: center;
+      z-index: 3;
+    }
+
+    .site.left { left: 0; }
+    .site.right { right: 0; }
+
+    .site .lan-box {
+      background: #152a45;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      padding: 0.75rem 0.5rem;
+    }
+
+    .site .lan-box .pc-mini {
+      width: 36px;
+      height: 28px;
+      margin: 0 auto 6px;
+      border: 2px solid var(--vlan-a);
+      border-radius: 4px;
+      background: #0a1628;
+    }
+
+    .site.right .lan-box .pc-mini { border-color: var(--vlan-b); }
+
+    .site .label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-top: 0.4rem;
+    }
+
+    .site .sub {
+      font-size: 0.7rem;
+      font-family: var(--mono);
+      color: var(--muted);
+    }
+
+    .gw {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 70px;
+      height: 70px;
+      z-index: 3;
+    }
+
+    .gw.left { left: 155px; }
+    .gw.right { right: 155px; }
+
+    .gw .diamond {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(145deg, #1e3a5f, #0f2744);
+      border: 2px solid var(--ipsec);
+      border-radius: 12px;
+      transform: rotate(45deg);
+      box-shadow: 0 0 20px rgba(103, 232, 249, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .gw .diamond span {
+      transform: rotate(-45deg);
+      font-size: 0.65rem;
+      font-weight: 700;
+      font-family: var(--mono);
+      color: var(--ipsec);
+    }
+
+    .internet {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 160px;
+      height: 90px;
+      border: 1px dashed rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 600;
+      z-index: 1;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .tunnel-path {
+      position: absolute;
+      left: 220px;
+      right: 220px;
+      top: 50%;
+      height: 40px;
+      transform: translateY(-50%);
+      z-index: 2;
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+
+    .tunnel-path.on { opacity: 1; }
+
+    .tunnel-path .tube {
+      width: 100%;
+      height: 100%;
+      border-radius: 20px;
+      border: 2px solid var(--tunnel);
+      background: linear-gradient(90deg, rgba(165, 180, 252, 0.05), rgba(103, 232, 249, 0.15), rgba(165, 180, 252, 0.05));
+      box-shadow: 0 0 24px rgba(165, 180, 252, 0.35), inset 0 0 20px rgba(103, 232, 249, 0.1);
+      animation: tunnelPulse 2s ease-in-out infinite;
+    }
+
+    .tunnel-badge {
+      position: absolute;
+      left: 50%;
+      top: -28px;
+      transform: translateX(-50%);
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--tunnel);
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+
+    .tunnel-badge.on { opacity: 1; }
+
+    .plain-pkt,
+    .enc-pkt {
+      position: absolute;
+      z-index: 6;
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      font-weight: 500;
+      padding: 4px 8px;
+      border-radius: 4px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .plain-pkt {
+      background: rgba(74, 222, 128, 0.2);
+      border: 1px solid var(--ok);
+      color: var(--ok);
+    }
+
+    .enc-pkt {
+      background: rgba(165, 180, 252, 0.25);
+      border: 1px solid var(--tunnel);
+      color: var(--tunnel);
+    }
+
+    .lock-icon {
+      position: absolute;
+      left: 50%;
+      top: calc(50% + 55px);
+      transform: translateX(-50%) scale(0);
+      font-size: 1.4rem;
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 4;
+    }
+
+    .lock-icon.on { transform: translateX(-50%) scale(1); }
+
+    .layers {
+      display: flex;
+      gap: 4px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+
+    .layers.on { opacity: 1; }
+
+    .layers .chip {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+    }
+
+    .layers .chip.esp {
+      border-color: var(--tunnel);
+      color: var(--tunnel);
+      background: rgba(165, 180, 252, 0.12);
+    }
+
+    .layers .chip.payload {
+      border-color: var(--ok);
+      color: var(--ok);
+    }
+
+    .layers .chip.newip {
+      border-color: var(--ipsec);
+      color: var(--ipsec);
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes dashMove {
+      to { stroke-dashoffset: -20; }
+    }
+
+    @keyframes tunnelPulse {
+      0%, 100% { box-shadow: 0 0 18px rgba(165, 180, 252, 0.25); }
+      50% { box-shadow: 0 0 32px rgba(103, 232, 249, 0.45); }
+    }
+
+    /* Multi-tunnel / IP addressing */
+    #multi-panel .info-grid h3 { color: var(--vlan-c); }
+    #multi-panel .caption {
+      border-left-color: var(--vlan-c);
+      background: rgba(251, 191, 36, 0.08);
+    }
+
+    .multi-stage {
+      position: relative;
+      width: min(100%, 820px);
+      margin: 0 auto;
+      min-height: 440px;
+    }
+
+    .multi-stage svg.tunnel-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .multi-stage svg.tunnel-svg path {
+      fill: none;
+      stroke-width: 3;
+      stroke-dasharray: 10 8;
+      opacity: 0.35;
+      transition: opacity 0.45s, stroke-width 0.35s;
+    }
+
+    .multi-stage svg.tunnel-svg path.on {
+      opacity: 1;
+      stroke-width: 4;
+      animation: dashMove 1.4s linear infinite;
+    }
+
+    .multi-stage svg.tunnel-svg path.tunnel-a { stroke: var(--vlan-a); }
+    .multi-stage svg.tunnel-svg path.tunnel-b { stroke: #f472b6; }
+    .multi-stage svg.tunnel-svg path.tunnel-c { stroke: var(--vlan-b); }
+
+    .net-node {
+      position: absolute;
+      z-index: 3;
+      text-align: center;
+      min-width: 118px;
+      transition: box-shadow 0.35s, transform 0.35s;
+    }
+
+    .net-node .box {
+      background: #152a45;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 10px;
+      padding: 0.55rem 0.5rem;
+    }
+
+    .net-node .box .icon {
+      width: 40px;
+      height: 30px;
+      margin: 0 auto 5px;
+      border: 2px solid var(--vlan-a);
+      border-radius: 4px;
+      background: #0a1628;
+    }
+
+    .net-node .title {
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .net-node .ip {
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      color: var(--muted);
+      margin-top: 2px;
+      line-height: 1.35;
+    }
+
+    .net-node .ip strong {
+      color: var(--vlan-c);
+      font-weight: 500;
+    }
+
+    .net-node.hq { left: 50%; top: 6%; transform: translateX(-50%); }
+    .net-node.branch-a { left: 4%; bottom: 8%; }
+    .net-node.branch-b { right: 4%; bottom: 8%; }
+    .net-node.cloud { left: 50%; bottom: 6%; transform: translateX(-50%); }
+
+    .net-node.gw-active .box {
+      border-color: var(--ipsec);
+      box-shadow: 0 0 22px rgba(103, 232, 249, 0.35);
+    }
+
+    .net-node.match .box {
+      border-color: var(--ok);
+      box-shadow: 0 0 18px rgba(74, 222, 128, 0.35);
+    }
+
+    .internet-pill {
+      position: absolute;
+      left: 50%;
+      top: 42%;
+      transform: translate(-50%, -50%);
+      padding: 0.45rem 1rem;
+      border-radius: 999px;
+      border: 1px dashed rgba(255, 255, 255, 0.22);
+      background: rgba(0, 0, 0, 0.28);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--muted);
+      z-index: 2;
+    }
+
+    .tunnel-label {
+      position: absolute;
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: 1px solid var(--line);
+      background: rgba(0, 0, 0, 0.45);
+      opacity: 0;
+      transition: opacity 0.35s;
+      z-index: 4;
+      white-space: nowrap;
+    }
+
+    .tunnel-label.on { opacity: 1; }
+    .tunnel-label.la { left: 22%; top: 52%; color: var(--vlan-a); border-color: var(--vlan-a); }
+    .tunnel-label.lb { right: 22%; top: 52%; color: #f472b6; border-color: #f472b6; }
+    .tunnel-label.lc { left: 50%; bottom: 28%; transform: translateX(-50%); color: var(--vlan-b); border-color: var(--vlan-b); }
+
+    .multi-pkt {
+      position: absolute;
+      z-index: 6;
+      font-family: var(--mono);
+      font-size: 0.58rem;
+      padding: 4px 7px;
+      border-radius: 4px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+    }
+
+    .multi-pkt.inner {
+      background: rgba(74, 222, 128, 0.22);
+      border: 1px solid var(--ok);
+      color: var(--ok);
+    }
+
+    .multi-pkt.outer {
+      background: rgba(165, 180, 252, 0.28);
+      border: 1px solid var(--tunnel);
+      color: var(--tunnel);
+    }
+
+    .policy-panel {
+      margin-top: 0.85rem;
+      padding: 0.75rem 0.9rem;
+      border-radius: 0.65rem;
+      border: 1px solid var(--line);
+      background: rgba(0, 0, 0, 0.25);
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .policy-panel .row {
+      padding: 0.2rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .policy-panel .row:last-child { border-bottom: none; }
+
+    .policy-panel .row.hit {
+      color: var(--ok);
+      background: rgba(74, 222, 128, 0.08);
+      margin: 0 -0.5rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    .addr-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 0.65rem;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .addr-legend span::before {
+      content: "";
+      display: inline-block;
+      width: 9px;
+      height: 9px;
+      border-radius: 2px;
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+
+    .addr-legend .priv::before { background: var(--ok); }
+    .addr-legend .pub::before { background: var(--tunnel); }
+    .addr-legend .enc::before { background: var(--vlan-c); }
+
+    /* 10 quick concepts */
+    #learn-panel .info-grid h3 { color: #c084fc; }
+    #learn-panel .caption {
+      border-left-color: #c084fc;
+      background: rgba(192, 132, 252, 0.1);
+    }
+
+    .learn-stage {
+      position: relative;
+      min-height: 380px;
+      border-radius: 1rem;
+      border: 1px solid var(--line);
+      background:
+        repeating-linear-gradient(0deg, transparent, transparent 23px, rgba(255, 255, 255, 0.03) 24px),
+        repeating-linear-gradient(90deg, transparent, transparent 23px, rgba(255, 255, 255, 0.03) 24px),
+        rgba(0, 0, 0, 0.28);
+      padding: 1rem 1rem 1.25rem;
+      overflow: hidden;
+    }
+
+    .concept-header {
+      text-align: center;
+      margin-bottom: 0.65rem;
+    }
+
+    .concept-header h4 {
+      font-size: 1.05rem;
+      color: var(--ink);
+      margin-bottom: 0.25rem;
+    }
+
+    .concept-header .sub {
+      font-size: 0.84rem;
+      color: var(--muted);
+      max-width: 36rem;
+      margin: 0 auto;
+    }
+
+    .learn-diag {
+      position: relative;
+      margin: 0 auto;
+      width: min(100%, 720px);
+      height: 300px;
+      transition: height 0.4s ease;
+    }
+
+    .learn-diag.tall { height: 360px; }
+
+    .learn-diag .host .ip-badge {
+      font-family: var(--mono);
+      font-size: 0.58rem;
+      color: var(--vlan-c);
+      opacity: 0;
+      transition: opacity 0.35s;
+      margin-top: 2px;
+    }
+
+    .learn-diag .host.show-ip .ip-badge { opacity: 1; }
+
+    .learn-diag .host.glow .pc {
+      box-shadow: 0 0 16px currentColor;
+    }
+
+    .learn-diag .mask-overlay {
+      position: absolute;
+      left: 50%;
+      top: 38%;
+      transform: translate(-50%, -50%);
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      padding: 0.35rem 0.6rem;
+      border-radius: 6px;
+      border: 1px dashed var(--vlan-c);
+      background: rgba(0, 0, 0, 0.55);
+      color: var(--vlan-c);
+      opacity: 0;
+      z-index: 6;
+      transition: opacity 0.35s;
+      white-space: nowrap;
+    }
+
+    .learn-diag .mask-overlay.on { opacity: 1; }
+
+    .learn-diag .learn-pkt {
+      position: absolute;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      border-radius: 4px;
+      z-index: 7;
+      opacity: 0;
+      font-family: var(--mono);
+      font-size: 0.55rem;
+      line-height: 18px;
+      white-space: nowrap;
+      box-shadow: 0 0 10px currentColor;
+    }
+
+    .learn-diag .learn-pkt.inner {
+      background: rgba(74, 222, 128, 0.25);
+      border: 1px solid var(--ok);
+      color: var(--ok);
+    }
+
+    .learn-diag .learn-pkt.outer {
+      background: rgba(165, 180, 252, 0.3);
+      border: 1px solid var(--tunnel);
+      color: var(--tunnel);
+    }
+
+    .learn-diag .learn-pkt.nat {
+      background: rgba(251, 191, 36, 0.25);
+      border: 1px solid var(--vlan-c);
+      color: var(--vlan-c);
+    }
+
+    .learn-wan {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 88px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s;
+      z-index: 2;
+    }
+
+    .learn-diag.show-wan .learn-wan { opacity: 1; pointer-events: auto; }
+
+    .learn-wan .cloud {
+      position: absolute;
+      left: 50%;
+      bottom: 8px;
+      transform: translateX(-50%);
+      padding: 0.35rem 0.85rem;
+      border: 1px dashed rgba(255, 255, 255, 0.25);
+      border-radius: 999px;
+      font-size: 0.7rem;
+      color: var(--muted);
+      background: rgba(0, 0, 0, 0.35);
+    }
+
+    .learn-wan .remote-site {
+      position: absolute;
+      right: 6%;
+      bottom: 18px;
+      text-align: center;
+      font-size: 0.72rem;
+    }
+
+    .learn-wan .remote-site .pc {
+      width: 44px;
+      height: 34px;
+      margin: 0 auto 4px;
+      border: 2px solid var(--vlan-b);
+      border-radius: 5px;
+      background: #0a1628;
+    }
+
+    .learn-wan .remote-site .ip-badge {
+      font-family: var(--mono);
+      font-size: 0.58rem;
+      color: var(--vlan-b);
+    }
+
+    .learn-wan .tunnel-line {
+      position: absolute;
+      left: 42%;
+      right: 18%;
+      bottom: 42px;
+      height: 3px;
+      background: repeating-linear-gradient(90deg, var(--tunnel) 0 8px, transparent 8px 14px);
+      opacity: 0;
+      transition: opacity 0.35s;
+    }
+
+    .learn-wan .tunnel-line.on { opacity: 1; }
+
+    .slice-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      justify-content: center;
+      margin-top: 0.45rem;
+      min-height: 1.4rem;
+    }
+
+    .slice-chips .chip {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.35s, transform 0.35s;
+    }
+
+    .slice-chips .chip.on {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .slice-chips .chip.c10 { border-color: var(--vlan-a); color: var(--vlan-a); }
+    .slice-chips .chip.c20 { border-color: var(--vlan-b); color: var(--vlan-b); }
+    .slice-chips .chip.c30 { border-color: var(--vlan-c); color: var(--vlan-c); }
+    .slice-chips .chip.cv { border-color: #c084fc; color: #c084fc; }
+
+    .concept-progress {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      justify-content: center;
+      margin-bottom: 1rem;
+    }
+
+    .concept-progress button {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--muted);
+      font-family: var(--font);
+      font-size: 0.72rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, transform 0.15s;
+    }
+
+    .concept-progress button.on {
+      background: linear-gradient(120deg, #a855f7, #6366f1);
+      color: #fff;
+      border-color: transparent;
+      transform: scale(1.08);
+    }
+
+    .concept-slide {
+      display: none;
+      text-align: center;
+      animation: fadeUp 0.4s ease both;
+    }
+
+    .concept-slide.active { display: block; }
+
+    .concept-slide h4 {
+      font-size: 1.05rem;
+      margin-bottom: 0.35rem;
+      color: var(--ink);
+    }
+
+    .concept-slide p.sub {
+      font-size: 0.84rem;
+      color: var(--muted);
+      max-width: 34rem;
+      margin: 0 auto 1rem;
+    }
+
+    .octet-row {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 0.75rem 0;
+    }
+
+    .octet {
+      font-family: var(--mono);
+      font-size: 1.1rem;
+      font-weight: 600;
+      padding: 0.65rem 0.85rem;
+      border-radius: 8px;
+      border: 2px solid var(--line);
+      background: #0f1f35;
+      transition: border-color 0.35s, box-shadow 0.35s, transform 0.35s;
+    }
+
+    .octet.lit {
+      border-color: var(--vlan-c);
+      box-shadow: 0 0 16px rgba(251, 191, 36, 0.35);
+      transform: translateY(-2px);
+    }
+
+    .mask-bar {
+      max-width: 420px;
+      margin: 0.75rem auto;
+      height: 22px;
+      border-radius: 6px;
+      overflow: hidden;
+      display: flex;
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      line-height: 22px;
+      text-align: center;
+    }
+
+    .mask-bar .net {
+      background: rgba(45, 212, 191, 0.45);
+      color: var(--ink);
+      transition: width 0.6s ease;
+    }
+
+    .mask-bar .host {
+      background: rgba(56, 189, 248, 0.45);
+      color: var(--ink);
+      transition: width 0.6s ease;
+    }
+
+    .mini-topo {
+      position: relative;
+      height: 160px;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    .mini-node {
+      position: absolute;
+      padding: 0.4rem 0.55rem;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #152a45;
+      font-size: 0.72rem;
+      font-family: var(--mono);
+      transition: border-color 0.35s, box-shadow 0.35s;
+    }
+
+    .mini-node.on {
+      border-color: var(--ok);
+      box-shadow: 0 0 14px rgba(74, 222, 128, 0.35);
+    }
+
+    .mini-pkt {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--vlan-c);
+      box-shadow: 0 0 10px var(--vlan-c);
+      opacity: 0;
+      z-index: 5;
+      transition: left 0.8s linear, top 0.8s linear, opacity 0.25s;
+    }
+
+    .slice-stack {
+      max-width: 400px;
+      margin: 0.75rem auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .slice-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .slice-row .bar {
+      flex: 1;
+      height: 26px;
+      border-radius: 6px;
+      border: 1px solid var(--line);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.55s ease;
+    }
+
+    .slice-row .bar.show { transform: scaleX(1); }
+
+    .slice-row.s1 .bar { background: linear-gradient(90deg, rgba(45, 212, 191, 0.5), rgba(45, 212, 191, 0.15)); }
+    .slice-row.s2 .bar { background: linear-gradient(90deg, rgba(56, 189, 248, 0.5), rgba(56, 189, 248, 0.15)); }
+    .slice-row.s3 .bar { background: linear-gradient(90deg, rgba(192, 132, 252, 0.5), rgba(192, 132, 252, 0.15)); }
+    .slice-row.s4 .bar { background: linear-gradient(90deg, rgba(251, 191, 36, 0.5), rgba(251, 191, 36, 0.15)); }
+
+    .cidr-table {
+      width: 100%;
+      max-width: 520px;
+      margin: 0.5rem auto;
+      border-collapse: collapse;
+      font-family: var(--mono);
+      font-size: 0.68rem;
+    }
+
+    .cidr-table th,
+    .cidr-table td {
+      border: 1px solid var(--line);
+      padding: 0.4rem 0.5rem;
+      text-align: left;
+    }
+
+    .cidr-table th { background: rgba(0, 0, 0, 0.35); color: var(--ink); }
+    .cidr-table tr.hl td { background: rgba(251, 191, 36, 0.12); color: var(--vlan-c); }
+
+    .voice-bar input[type="range"] {
+      width: 100px;
+      accent-color: var(--vlan-a);
+      vertical-align: middle;
+    }
+
+    .voice-bar .speed-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    @media (max-width: 700px) {
+      .switch { height: 320px; }
+      .gw.left { left: 120px; }
+      .gw.right { right: 120px; }
+      .tunnel-path { left: 175px; right: 175px; }
+      .site { width: 100px; }
+      .step-label { margin-left: 0; width: 100%; }
+      .compare-table { font-size: 0.78rem; }
+      .multi-stage { min-height: 480px; }
+      .net-node { min-width: 100px; font-size: 0.9em; }
+      .net-node.branch-a { left: 2%; }
+      .net-node.branch-b { right: 2%; }
+    }
+
+</style>
+</head>
+<body>
+  <noscript>
+    <p style="padding:1rem;text-align:center;background:#1e293b;color:#e2e8f0;">
+      This page needs JavaScript for animations and voice narration. Please enable JavaScript in your browser.
+    </p>
+  </noscript>
+  <div class="wrap">
+    <header class="hero">
+      <h1><span>VLAN</span> &amp; <span>IPsec</span></h1>
+      <p>
+        VLANs, IPsec, IP addressing, network slicing, and ten quick animated concepts —
+        with faster spoken narration you can tune with the speed slider.
+        <a href="dashboard.html">Open the VLAN and multi-tunnel dashboard</a>.
+      </p>
+      <div class="voice-bar">
+        <label>
+          <input type="checkbox" id="voice-enabled" checked="">
+          Voice narration on
+        </label>
+        <span class="speed-label">Speed</span>
+        <input type="range" id="voice-rate" min="0.85" max="1.35" step="0.05" value="1.15" title="Narration speed">
+        <span class="speaking-dot" id="speaking-dot" aria-live="polite"><i></i> Speaking…</span>
+      </div>
+      <div class="tabs" role="tablist">
+        <button type="button" class="active" data-tab="vlan" role="tab" aria-selected="true">VLAN concept</button>
+        <button type="button" data-tab="ipsec" role="tab" aria-selected="false">IPsec concept</button>
+        <button type="button" data-tab="compare" role="tab" aria-selected="false">Compare &amp; together</button>
+        <button type="button" data-tab="multi" role="tab" aria-selected="false">IP &amp; multi-tunnel</button>
+        <button type="button" data-tab="learn" role="tab" aria-selected="false">10 easy concepts</button>
+      </div>
+    </header>
+
+    <!-- VLAN -->
+    <section id="vlan-panel" class="panel active" role="tabpanel">
+      <h2>VLAN — Virtual LAN</h2>
+      <p class="lead">
+        A VLAN is a logical LAN carved out of one (or more) physical switches. Devices in the same VLAN share a
+        broadcast domain; devices in different VLANs do not — even on the same switch. That improves security,
+        reduces unnecessary broadcast traffic, and lets you design networks by department or function instead of by cable.
+      </p>
+
+      <div class="info-grid">
+        <article>
+          <h3>What problem it solves</h3>
+          <ul>
+            <li>One flat LAN = huge broadcast storms</li>
+            <li>Hard to isolate guests / IoT / servers</li>
+            <li>Need separate networks without buying more switches</li>
+          </ul>
+        </article>
+        <article>
+          <h3>Where it works</h3>
+          <ul>
+            <li>OSI Layer 2 (Ethernet frames)</li>
+            <li>Configured on switches (and sometimes APs)</li>
+            <li>Does <em>not</em> encrypt traffic by itself</li>
+          </ul>
+        </article>
+        <article>
+          <h3>Typical use cases</h3>
+          <ul>
+            <li>Staff vs Guest Wi‑Fi</li>
+            <li>Voice VLAN for IP phones</li>
+            <li>Servers / management / OT isolation</li>
+          </ul>
+        </article>
+      </div>
+
+      <div class="stage">
+        <div class="switch" id="vlan-stage">
+          <div class="barrier-label" id="vlan-barrier-label">Broadcast domains isolated</div>
+          <div class="barrier" id="vlan-barrier"></div>
+
+          <div class="host h1" id="host1">
+            <div class="pc"></div>
+            <div class="name">PC-A</div>
+            <div class="vlan-tag">VLAN 10</div>
+          </div>
+          <div class="host h2" id="host2">
+            <div class="pc"></div>
+            <div class="name">PC-B</div>
+            <div class="vlan-tag">VLAN 10</div>
+          </div>
+          <div class="host h3" id="host3">
+            <div class="pc"></div>
+            <div class="name">PC-C</div>
+            <div class="vlan-tag">VLAN 20</div>
+          </div>
+          <div class="host h4" id="host4">
+            <div class="pc"></div>
+            <div class="name">PC-D</div>
+            <div class="vlan-tag">VLAN 20</div>
+          </div>
+          <div class="host h5" id="host5">
+            <div class="pc"></div>
+            <div class="name">Uplink / Router</div>
+            <div class="vlan-tag">Trunk (tagged)</div>
+          </div>
+
+          <svg class="cable" width="100%" height="100%" viewBox="0 0 720 280" preserveAspectRatio="xMidYMid meet">
+            <path d="M70 55 L160 120" stroke="#2dd4bf"></path>
+            <path d="M200 55 L240 120" stroke="#2dd4bf"></path>
+            <path d="M520 55 L480 120" stroke="#38bdf8"></path>
+            <path d="M650 55 L560 120" stroke="#38bdf8"></path>
+            <path d="M360 250 L360 175" stroke="#fbbf24"></path>
+          </svg>
+
+          <div class="switch-body">
+            <span class="switch-label">LAYER-2 SWITCH</span>
+            <div class="port" id="p1" title="Port 1"></div>
+            <div class="port" id="p2" title="Port 2"></div>
+            <div class="port" id="p3" title="Port 3"></div>
+            <div class="port" id="p4" title="Port 4"></div>
+            <div class="port" id="p5" title="Trunk"></div>
+          </div>
+
+          <div class="packet" id="vlan-pkt"></div>
+        </div>
+      </div>
+
+      <div class="legend">
+        <span class="l10">VLAN 10 (access)</span>
+        <span class="l20">VLAN 20 (access)</span>
+        <span class="ltrunk">Trunk (802.1Q tags)</span>
+      </div>
+
+      <div class="controls">
+        <button type="button" class="primary" id="vlan-play">Play with voice</button>
+        <button type="button" id="vlan-reset">Reset / stop voice</button>
+        <span class="step-label" id="vlan-step">Step 0 / 7 — Ready</span>
+      </div>
+
+      <div class="caption" id="vlan-caption">
+        Press <strong>Play with voice</strong> for a full narrated walkthrough (7 steps). Unmute your speakers.
+      </div>
+
+      <h3 class="section-title">Core ideas</h3>
+      <div class="key-points">
+        <article>
+          <h3>Access ports</h3>
+          <p>Assigned to exactly one VLAN. End devices (PCs, printers) send/receive untagged frames. The switch adds the VLAN membership internally.</p>
+        </article>
+        <article>
+          <h3>Trunk ports</h3>
+          <p>Carry many VLANs between switches or to a router. Most frames are tagged with IEEE 802.1Q (4-byte tag including VLAN ID 1–4094).</p>
+        </article>
+        <article>
+          <h3>Broadcast domain</h3>
+          <p>Broadcasts (ARP, DHCP discover, etc.) stay inside one VLAN. Smaller domains = less noise and a smaller attack surface.</p>
+        </article>
+        <article>
+          <h3>Inter-VLAN routing</h3>
+          <p>Hosts in different VLANs need a Layer-3 device (router-on-a-stick, L3 switch SVI, or firewall) to talk. That hop is where ACLs/firewall rules apply.</p>
+        </article>
+        <article>
+          <h3>Native VLAN</h3>
+          <p>On a trunk, untagged frames belong to the native VLAN (often VLAN 1 by default). Best practice: set a dedicated unused native VLAN and match both ends.</p>
+        </article>
+        <article>
+          <h3>Security tip</h3>
+          <p>Disable unused ports, put them in an unused VLAN, and avoid using VLAN 1 for user traffic. VLANs are isolation — not encryption.</p>
+        </article>
+      </div>
+
+      <h3 class="section-title">Glossary</h3>
+      <dl class="glossary">
+        <dt>VLAN ID (VID)</dt>
+        <dd>Number identifying the VLAN (commonly 1–4094). Carried in the 802.1Q tag on trunks.</dd>
+        <dt>802.1Q tag</dt>
+        <dd>Extra Ethernet header fields: TPID 0x8100, priority bits (PCP), DEI, and 12-bit VLAN ID.</dd>
+        <dt>SVI (Switch Virtual Interface)</dt>
+        <dd>Virtual Layer-3 interface on an L3 switch, one per VLAN, used as the default gateway for that subnet.</dd>
+        <dt>Router-on-a-stick</dt>
+        <dd>One physical router interface with sub-interfaces (one per VLAN) on a trunk, performing inter-VLAN routing.</dd>
+        <dt>Voice VLAN</dt>
+        <dd>Separate VLAN for IP phones so voice traffic can get QoS priority without mixing with data broadcasts.</dd>
+      </dl>
+
+      <div class="note">
+        <strong>Remember:</strong> Same VLAN usually shares one IP subnet (e.g. VLAN 10 → 10.10.10.0/24).
+        Different VLANs = different subnets in almost every design. Crossing VLANs always means routing.
+      </div>
+    </section>
+
+    <!-- IPsec -->
+    <section id="ipsec-panel" class="panel" role="tabpanel">
+      <h2>IPsec — Internet Protocol Security</h2>
+      <p class="lead">
+        IPsec is a suite of protocols that secures IP packets: encryption for confidentiality, hashing for integrity,
+        and peer authentication. It is the foundation of many site-to-site and remote-access VPNs that must cross
+        the public Internet safely.
+      </p>
+
+      <div class="info-grid">
+        <article>
+          <h3>What problem it solves</h3>
+          <ul>
+            <li>Internet is untrusted — sniffing &amp; spoofing</li>
+            <li>Need private links between offices</li>
+            <li>Remote users need secure access</li>
+          </ul>
+        </article>
+        <article>
+          <h3>Where it works</h3>
+          <ul>
+            <li>OSI Layer 3 (IP packets)</li>
+            <li>On firewalls, routers, VPN clients</li>
+            <li>Protects data in transit (not at rest)</li>
+          </ul>
+        </article>
+        <article>
+          <h3>Typical use cases</h3>
+          <ul>
+            <li>Site-to-site VPN (HQ ↔ branch)</li>
+            <li>Remote-access / dial-up VPN</li>
+            <li>Cloud / DC interconnects</li>
+          </ul>
+        </article>
+      </div>
+
+      <div class="stage">
+        <div class="ipsec-stage" id="ipsec-stage">
+          <div class="site left">
+            <div class="lan-box">
+              <div class="pc-mini"></div>
+              Site A LAN
+            </div>
+            <div class="label">Headquarters</div>
+            <div class="sub">10.1.0.0/24</div>
+          </div>
+
+          <div class="gw left">
+            <div class="diamond"><span>VPN<br>GW</span></div>
+          </div>
+
+          <div class="internet">Internet<br><small style="font-weight:400;opacity:0.7">(untrusted)</small></div>
+
+          <div class="tunnel-path" id="tunnel">
+            <div class="tube"></div>
+          </div>
+          <div class="tunnel-badge" id="tunnel-badge">IPsec tunnel (ESP)</div>
+          <div class="lock-icon" id="lock-icon">🔒</div>
+
+          <div class="gw right">
+            <div class="diamond"><span>VPN<br>GW</span></div>
+          </div>
+
+          <div class="site right">
+            <div class="lan-box">
+              <div class="pc-mini"></div>
+              Site B LAN
+            </div>
+            <div class="label">Branch office</div>
+            <div class="sub">10.2.0.0/24</div>
+          </div>
+
+          <div class="plain-pkt" id="plain-pkt">IP | data</div>
+          <div class="enc-pkt" id="enc-pkt">NEW-IP | ESP | ████████</div>
+        </div>
+
+        <div class="layers" id="esp-layers">
+          <span class="chip newip">New outer IP</span>
+          <span class="chip esp">ESP header</span>
+          <span class="chip payload">Encrypted original packet</span>
+          <span class="chip esp">ESP trailer + ICV</span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button type="button" class="primary" id="ipsec-play">Play with voice</button>
+        <button type="button" id="ipsec-reset">Reset / stop voice</button>
+        <span class="step-label" id="ipsec-step">Step 0 / 7 — Ready</span>
+      </div>
+
+      <div class="caption" id="ipsec-caption">
+        Press <strong>Play with voice</strong> for a full narrated walkthrough (7 steps). Unmute your speakers.
+      </div>
+
+      <h3 class="section-title">Core ideas</h3>
+      <div class="key-points">
+        <article>
+          <h3>Confidentiality</h3>
+          <p>Encryption (AES-GCM, AES-CBC, etc.) hides packet contents from anyone on the path between gateways.</p>
+        </article>
+        <article>
+          <h3>Integrity &amp; auth</h3>
+          <p>ICV / HMAC (or AEAD tags) prove the packet was not altered and came from the expected peer.</p>
+        </article>
+        <article>
+          <h3>IKE (Phase 1 &amp; 2)</h3>
+          <p>IKE negotiates algorithms and keys. Phase 1 builds a secure channel (IKE SA); Phase 2 builds IPsec SAs for data (Child SA).</p>
+        </article>
+        <article>
+          <h3>ESP vs AH</h3>
+          <p>ESP (Encapsulating Security Payload) encrypts and optionally authenticates — used almost everywhere. AH only authenticates and is rare today.</p>
+        </article>
+        <article>
+          <h3>Tunnel vs transport</h3>
+          <p>Tunnel mode wraps the whole original IP packet (site-to-site). Transport mode protects the payload of an existing IP header (host-to-host).</p>
+        </article>
+        <article>
+          <h3>Interesting traffic</h3>
+          <p>Policies (selectors) decide which traffic enters the tunnel — e.g. 10.1.0.0/24 ↔ 10.2.0.0/24. Other traffic is not encrypted by that SA.</p>
+        </article>
+      </div>
+
+      <h3 class="section-title">Glossary</h3>
+      <dl class="glossary">
+        <dt>SA (Security Association)</dt>
+        <dd>Agreement between peers: algorithms, keys, SPI, lifetime. Unidirectional — you usually have a pair (in + out).</dd>
+        <dt>SPI</dt>
+        <dd>Security Parameter Index — a number in ESP/AH that tells the receiver which SA (keys) to use.</dd>
+        <dt>IKE / IKEv2</dt>
+        <dd>Internet Key Exchange — protocol that authenticates peers (PSK, certificates) and creates SAs. IKEv2 is the modern standard.</dd>
+        <dt>ESP</dt>
+        <dd>Encapsulating Security Payload — protocol number 50. Provides encryption ± authentication of IP traffic.</dd>
+        <dt>PFS (Perfect Forward Secrecy)</dt>
+        <dd>Optional Diffie–Hellman on Phase 2 so old session keys cannot decrypt future traffic if a long-term key is later stolen.</dd>
+        <dt>NAT-T</dt>
+        <dd>NAT Traversal — encapsulates ESP in UDP 4500 so IPsec works through NAT devices that break raw ESP.</dd>
+      </dl>
+
+      <div class="note">
+        <strong>Remember:</strong> IPsec protects data <em>in transit</em> between VPN endpoints.
+        Inside each LAN the traffic is usually clear again (unless you use end-to-end crypto as well).
+        Always keep gateway firmware and cipher suites modern (prefer AES-GCM, IKEv2, strong DH groups).
+      </div>
+    </section>
+
+    <!-- Compare -->
+    <section id="compare-panel" class="panel" role="tabpanel">
+      <h2>VLAN vs IPsec — and how they work together</h2>
+      <p class="lead">
+        VLANs and IPsec solve different problems at different layers. Enterprises almost always use both:
+        VLANs organize and isolate inside the campus; IPsec (or similar VPN tech) protects links across sites and the Internet.
+      </p>
+
+      <div class="info-grid">
+        <article>
+          <h3>VLAN in one line</h3>
+          <p>Logical segmentation of a LAN so different groups do not share broadcasts — isolation inside your building or DC.</p>
+        </article>
+        <article>
+          <h3>IPsec in one line</h3>
+          <p>Cryptographic protection of IP traffic so private networks can talk safely over an untrusted path.</p>
+        </article>
+        <article>
+          <h3>Together</h3>
+          <p>Each site uses VLANs locally; the firewall/router encrypts selected subnets between sites with IPsec.</p>
+        </article>
+      </div>
+
+      <h3 class="section-title">Side-by-side</h3>
+      <div style="overflow-x: auto;">
+        <table class="compare-table">
+          <thead>
+            <tr>
+              <th>Topic</th>
+              <th>VLAN</th>
+              <th>IPsec</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Primary goal</td>
+              <td>Segment broadcast domains / isolate groups</td>
+              <td>Encrypt &amp; authenticate traffic in transit</td>
+            </tr>
+            <tr>
+              <td>OSI layer</td>
+              <td>Layer 2 (Ethernet)</td>
+              <td>Layer 3 (IP) — sometimes called Layer 3 VPN</td>
+            </tr>
+            <tr>
+              <td>Device focus</td>
+              <td>Switches, APs, L3 switches</td>
+              <td>Firewalls, routers, VPN clients</td>
+            </tr>
+            <tr>
+              <td>Scope</td>
+              <td>Usually within a campus / DC fabric</td>
+              <td>Across WAN / Internet / cloud</td>
+            </tr>
+            <tr>
+              <td>Encrypts data?</td>
+              <td>No (by itself)</td>
+              <td>Yes (ESP)</td>
+            </tr>
+            <tr>
+              <td>Identifier</td>
+              <td>VLAN ID (802.1Q)</td>
+              <td>SPI + SA / policies</td>
+            </tr>
+            <tr>
+              <td>Crossing “boundaries”</td>
+              <td>Needs routing between VLANs</td>
+              <td>Needs matching peers &amp; interesting traffic</td>
+            </tr>
+            <tr>
+              <td>Common mistake</td>
+              <td>Thinking VLANs = security encryption</td>
+              <td>Weak PSK / outdated ciphers / wrong selectors</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="section-title">Example enterprise design</h3>
+      <div class="key-points">
+        <article>
+          <h3>At HQ</h3>
+          <p>VLAN 10 Users, VLAN 20 Servers, VLAN 30 Guests, VLAN 40 Voice. L3 switch or firewall routes between them with ACLs.</p>
+        </article>
+        <article>
+          <h3>At branch</h3>
+          <p>Similar VLANs (maybe fewer). Local default gateway is the branch firewall.</p>
+        </article>
+        <article>
+          <h3>Between sites</h3>
+          <p>IPsec tunnel between firewalls. Policy: HQ 10.1.0.0/16 ↔ Branch 10.2.0.0/16. Guests may be excluded from the tunnel.</p>
+        </article>
+        <article>
+          <h3>Result</h3>
+          <p>Users are isolated from guests locally (VLAN). Branch users reach HQ servers securely over the Internet (IPsec).</p>
+        </article>
+      </div>
+
+      <div class="controls" style="margin-top: 1.25rem;">
+        <button type="button" class="primary" id="compare-play">Explain with voice</button>
+        <button type="button" id="compare-stop">Stop voice</button>
+      </div>
+      <div class="caption" id="compare-caption" style="border-left-color: var(--vlan-b); background: rgba(56, 189, 248, 0.08);">
+        Press <strong>Explain with voice</strong> for a spoken summary of how VLAN and IPsec differ and how they complement each other.
+      </div>
+
+      <div class="note">
+        <strong>Interview tip:</strong> “VLAN separates who can hear broadcasts on the LAN.
+        IPsec protects packets that must travel across networks we do not trust.”
+      </div>
+    </section>
+
+    <!-- IP addressing & multiple tunnels -->
+    <section id="multi-panel" class="panel" role="tabpanel">
+      <h2>IP addresses &amp; multiple VPN tunnels</h2>
+      <p class="lead">
+        Every host has a <strong>private (inner) IP</strong> on its LAN. Gateways also have a <strong>public (outer) IP</strong> on the Internet.
+        When several IPsec tunnels exist from one HQ firewall, each tunnel is a separate encrypted path — and <strong>policy + routing</strong> decide which tunnel a packet uses.
+      </p>
+
+      <div class="info-grid">
+        <article>
+          <h3>Private IP (RFC 1918)</h3>
+          <ul>
+            <li>10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16</li>
+            <li>Used inside sites — not routed on the public Internet</li>
+            <li>Example host: 10.1.1.50 · gateway 10.1.1.1</li>
+          </ul>
+        </article>
+        <article>
+          <h3>Public IP</h3>
+          <ul>
+            <li>Globally reachable addresses on WAN interfaces</li>
+            <li>Outer header in tunnel mode: GW<sub>A</sub> → GW<sub>B</sub></li>
+            <li>Example: 203.0.113.10 ↔ 198.51.100.20</li>
+          </ul>
+        </article>
+        <article>
+          <h3>CIDR &amp; subnet</h3>
+          <ul>
+            <li>/24 → 256 addresses, 254 usable hosts</li>
+            <li>Mask 255.255.255.0 separates network vs host bits</li>
+            <li>Routing uses longest-prefix match</li>
+          </ul>
+        </article>
+        <article>
+          <h3>Multiple tunnels</h3>
+          <ul>
+            <li>One IKE/IPsec SA pair per remote peer (usually)</li>
+            <li>Selectors match source/dest subnets per tunnel</li>
+            <li>Wrong policy = packet takes wrong tunnel or no VPN</li>
+          </ul>
+        </article>
+        <article>
+          <h3>Network slicing (view)</h3>
+          <ul>
+            <li>Logical “slices” on shared hardware (VLAN, VRF, VPN)</li>
+            <li>Each slice can have its own QoS, security, and paths</li>
+            <li>5G adds radio/core slice IDs (eMBB, URLLC, mIoT)</li>
+          </ul>
+        </article>
+        <article>
+          <h3>DNS &amp; names</h3>
+          <ul>
+            <li>Humans use names; IP is what routers forward</li>
+            <li>DNS resolves name → IP before the first packet</li>
+            <li>Tunnel policies still match on IP subnets</li>
+          </ul>
+        </article>
+      </div>
+
+      <table class="cidr-table">
+        <thead>
+          <tr><th>Prefix</th><th>Mask (dotted)</th><th>Hosts (approx.)</th><th>Example use</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>/32</td><td>255.255.255.255</td><td>1</td><td>Loopback / host route</td></tr>
+          <tr class="hl"><td>/24</td><td>255.255.255.0</td><td>254</td><td>Office LAN, one VLAN</td></tr>
+          <tr><td>/16</td><td>255.255.0.0</td><td>65k</td><td>Whole site summary</td></tr>
+          <tr><td>/8</td><td>255.0.0.0</td><td>16M</td><td>Private 10.0.0.0/8 space</td></tr>
+        </tbody>
+      </table>
+
+      <div class="stage" style="min-height: 460px;">
+        <div class="multi-stage" id="multi-stage">
+          <svg class="tunnel-svg" viewBox="0 0 820 440" preserveAspectRatio="xMidYMid meet">
+            <!-- HQ to Branch A -->
+            <path id="path-tunnel-a" class="tunnel-a" d="M 410 95 C 280 140, 180 220, 130 320"></path>
+            <!-- HQ to Branch B -->
+            <path id="path-tunnel-b" class="tunnel-b" d="M 410 95 C 540 140, 640 220, 690 320"></path>
+            <!-- HQ to Cloud partner -->
+            <path id="path-tunnel-c" class="tunnel-c" d="M 410 95 C 410 180, 410 250, 410 330"></path>
+          </svg>
+
+          <div class="internet-pill">Internet (untrusted)</div>
+
+          <div class="tunnel-label la" id="lbl-tunnel-a">Tunnel A · 10.1.0.0/16 ↔ 10.2.0.0/16</div>
+          <div class="tunnel-label lb" id="lbl-tunnel-b">Tunnel B · 10.1.0.0/16 ↔ 10.3.0.0/16</div>
+          <div class="tunnel-label lc" id="lbl-tunnel-c">Tunnel C · 10.1.0.0/16 ↔ 10.4.0.0/24</div>
+
+          <div class="net-node hq" id="node-hq">
+            <div class="box">
+              <div class="icon"></div>
+              <div class="title">HQ firewall</div>
+              <div class="ip">
+                LAN <strong>10.1.1.1</strong><br>
+                WAN <strong>203.0.113.10</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="net-node branch-a" id="node-branch-a">
+            <div class="box">
+              <div class="icon" style="border-color: var(--vlan-a)"></div>
+              <div class="title">Branch A</div>
+              <div class="ip">
+                LAN <strong>10.2.1.1</strong> · net 10.2.0.0/16<br>
+                WAN <strong>198.51.100.20</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="net-node branch-b" id="node-branch-b">
+            <div class="box">
+              <div class="icon" style="border-color: #f472b6"></div>
+              <div class="title">Branch B</div>
+              <div class="ip">
+                LAN <strong>10.3.1.1</strong> · net 10.3.0.0/16<br>
+                WAN <strong>198.51.100.30</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="net-node cloud" id="node-cloud">
+            <div class="box">
+              <div class="icon" style="border-color: var(--vlan-b)"></div>
+              <div class="title">Cloud partner</div>
+              <div class="ip">
+                LAN <strong>10.4.0.1</strong> · net 10.4.0.0/24<br>
+                WAN <strong>198.51.100.40</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="multi-pkt inner" id="multi-inner">10.1.1.50 → 10.2.1.100</div>
+          <div class="multi-pkt outer" id="multi-outer">203.0.113.10 → 198.51.100.20 | ESP</div>
+        </div>
+      </div>
+
+      <div class="addr-legend">
+        <span class="priv">Green = inner (private) IP header</span>
+        <span class="enc">Purple = encrypted outer IP over Internet</span>
+        <span class="pub">Policy picks tunnel by destination subnet</span>
+      </div>
+
+      <div class="policy-panel" id="policy-panel">
+        <div class="row" id="pol-a">Tunnel A: src 10.1.0.0/16 → dst 10.2.0.0/16 · peer 198.51.100.20</div>
+        <div class="row" id="pol-b">Tunnel B: src 10.1.0.0/16 → dst 10.3.0.0/16 · peer 198.51.100.30</div>
+        <div class="row" id="pol-c">Tunnel C: src 10.1.0.0/16 → dst 10.4.0.0/24 · peer 198.51.100.40</div>
+      </div>
+
+      <div class="controls">
+        <button type="button" class="primary" id="multi-play">Play with voice</button>
+        <button type="button" id="multi-reset">Reset / stop voice</button>
+        <span class="step-label" id="multi-step">Step 0 / 10 — Ready</span>
+      </div>
+
+      <div class="caption" id="multi-caption">
+        Press <strong>Play with voice</strong> — inner/outer IPs, CIDR, slicing, and three tunnels (10 steps).
+      </div>
+
+      <h3 class="section-title">Packet journey (out and back)</h3>
+      <div class="key-points">
+        <article>
+          <h3>1. Host sends inner IP</h3>
+          <p>PC 10.1.1.50 builds a packet: source 10.1.1.50, destination 10.2.1.100. Default gateway is HQ firewall 10.1.1.1.</p>
+        </article>
+        <article>
+          <h3>2. Policy match</h3>
+          <p>Firewall checks IPsec policy: destination 10.2.x matches Tunnel A (not B or C). Traffic is marked “interesting” for that SA.</p>
+        </article>
+        <article>
+          <h3>3. Encrypt &amp; outer IP</h3>
+          <p>Original packet is encrypted. New outer header uses <em>public</em> IPs: 203.0.113.10 → 198.51.100.20. Inner IPs are hidden.</p>
+        </article>
+        <article>
+          <h3>4. Remote decrypt</h3>
+          <p>Branch A gateway decrypts, verifies SPI/SA, strips outer header, forwards inner packet to 10.2.1.100 on the LAN.</p>
+        </article>
+        <article>
+          <h3>5. Return path</h3>
+          <p>Reply 10.2.1.100 → 10.1.1.50 matches the reverse policy on Tunnel A. Same tunnel, opposite direction SA.</p>
+        </article>
+        <article>
+          <h3>6. Another destination</h3>
+          <p>Packet to 10.3.1.50 matches Tunnel B — different outer IPs (→ 198.51.100.30). Multiple tunnels coexist; each has its own keys.</p>
+        </article>
+      </div>
+
+      <div class="note">
+        <strong>Key idea:</strong> Routing picks the <em>next hop</em> (often the VPN interface). IPsec policy picks <em>whether</em> to encrypt and <em>which</em> tunnel/peer.
+        Both must agree, or traffic black-holes or goes in cleartext (if misconfigured).
+        <strong> Slicing tie-in:</strong> each VLAN/VRF/VPN tunnel is a slice — isolated forwarding and policy on shared cables and routers.
+      </div>
+    </section>
+
+    <!-- 10 concepts -->
+    <section id="learn-panel" class="panel" role="tabpanel">
+      <h2>10 animated concepts — IP addressing &amp; network slicing</h2>
+      <p class="lead">
+        Short visual lessons: how an IP address is built, how subnets and gateways work, how private and public addresses differ,
+        and how slicing (VLAN, VRF, VPN, 5G) creates separate logical networks on one physical infrastructure.
+      </p>
+
+      <div class="info-grid">
+        <article>
+          <h3>What you will see</h3>
+          <p>One animation stage, ten steps. Each step highlights one idea with motion and voice — good for revision before labs or interviews.</p>
+        </article>
+        <article>
+          <h3>Network slicing</h3>
+          <p>Not one technology — a design idea: partition capacity and policy so e.g. voice, IoT, and guest traffic do not compete or leak into each other.</p>
+        </article>
+      </div>
+
+      <div class="learn-stage" id="learn-stage">
+        <div class="concept-progress" id="concept-progress" aria-label="Concept steps 1 to 10"><button type="button" title="Concept 1">1</button><button type="button" title="Concept 2">2</button><button type="button" title="Concept 3">3</button><button type="button" title="Concept 4">4</button><button type="button" title="Concept 5">5</button><button type="button" title="Concept 6">6</button><button type="button" title="Concept 7">7</button><button type="button" title="Concept 8">8</button><button type="button" title="Concept 9">9</button><button type="button" title="Concept 10">10</button></div>
+
+        <div class="concept-header">
+          <h4 id="learn-title">1 — IP address on each PC</h4>
+          <p class="sub" id="learn-sub">Watch PC-A — four numbers identify this host on the LAN (like the VLAN diagram).</p>
+        </div>
+
+        <div class="switch learn-diag" id="learn-diag">
+          <div class="barrier-label" id="learn-barrier-label">Different VLAN / slice</div>
+          <div class="barrier" id="learn-barrier"></div>
+          <div class="mask-overlay" id="learn-mask">/24 → net 10.1.1.0 · host .50</div>
+
+          <div class="host h1" id="lh1">
+            <div class="pc"></div>
+            <div class="name">PC-A</div>
+            <div class="ip-badge" id="lip-a">10.1.1.50</div>
+          </div>
+          <div class="host h2" id="lh2">
+            <div class="pc"></div>
+            <div class="name">PC-B</div>
+            <div class="ip-badge" id="lip-b">10.1.1.20</div>
+          </div>
+          <div class="host h3" id="lh3">
+            <div class="pc"></div>
+            <div class="name">PC-C</div>
+            <div class="ip-badge" id="lip-c">10.1.2.30</div>
+          </div>
+          <div class="host h4" id="lh4">
+            <div class="pc"></div>
+            <div class="name">PC-D</div>
+            <div class="ip-badge" id="lip-d">10.2.1.40</div>
+          </div>
+          <div class="host h5" id="lh5">
+            <div class="pc"></div>
+            <div class="name">Uplink / Router</div>
+            <div class="ip-badge" id="lip-gw">LAN 10.1.1.1 · WAN 203.0.113.10</div>
+          </div>
+
+          <svg class="cable" width="100%" height="100%" viewBox="0 0 720 280" preserveAspectRatio="xMidYMid meet">
+            <path d="M70 55 L160 120" stroke="#2dd4bf"></path>
+            <path d="M200 55 L240 120" stroke="#2dd4bf"></path>
+            <path d="M520 55 L480 120" stroke="#38bdf8"></path>
+            <path d="M650 55 L560 120" stroke="#38bdf8"></path>
+            <path d="M360 250 L360 175" stroke="#fbbf24"></path>
+          </svg>
+
+          <div class="switch-body">
+            <span class="switch-label">LAYER-2 SWITCH</span>
+            <div class="port" id="lp1"></div>
+            <div class="port" id="lp2"></div>
+            <div class="port" id="lp3"></div>
+            <div class="port" id="lp4"></div>
+            <div class="port" id="lp5"></div>
+          </div>
+
+          <div class="learn-pkt inner" id="learn-pkt"></div>
+
+          <div class="learn-wan">
+            <div class="tunnel-line" id="learn-tunnel-line"></div>
+            <div class="cloud">Internet</div>
+            <div class="remote-site" id="learn-remote">
+              <div class="pc"></div>
+              <div>Branch PC</div>
+              <div class="ip-badge">10.2.1.100</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="slice-chips" id="learn-chips">
+          <span class="chip c10" id="chip-v10">VLAN 10</span>
+          <span class="chip c20" id="chip-v20">VLAN 20</span>
+          <span class="chip c30" id="chip-v30">VLAN 30</span>
+          <span class="chip cv" id="chip-vrf">VRF / VPN slice</span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button type="button" class="primary" id="learn-play">Play all 10 with voice</button>
+        <button type="button" id="learn-reset">Reset / stop</button>
+        <span class="step-label" id="learn-step">Concept 0 / 10 — Ready</span>
+      </div>
+
+      <div class="caption" id="learn-caption">
+        Press <strong>Play all 10 with voice</strong> — VLAN-style switch diagram with moving packets. Use the speed slider if needed.
+      </div>
+
+      <h3 class="section-title">Slicing map (easy memory)</h3>
+      <div class="key-points">
+        <article>
+          <h3>L2 slice</h3>
+          <p>VLAN — who shares broadcasts on a switch.</p>
+        </article>
+        <article>
+          <h3>L3 slice</h3>
+          <p>VRF or separate VRF-lite — separate routing tables.</p>
+        </article>
+        <article>
+          <h3>Secure slice</h3>
+          <p>IPsec / SD-WAN overlay — encrypted path over Internet/MPLS.</p>
+        </article>
+        <article>
+          <h3>5G slice</h3>
+          <p>SST + SD slice ID — RAN/core QoS and isolation for mobile services.</p>
+        </article>
+      </div>
+    </section>
+  </div>
+
+  <script defer="">
+    const voiceEnabledEl = document.getElementById("voice-enabled");
+    const voiceRateEl = document.getElementById("voice-rate");
+    const speakingDot = document.getElementById("speaking-dot");
+    const canSpeak = "speechSynthesis" in window;
+
+    function stopVoice() {
+      if (canSpeak) window.speechSynthesis.cancel();
+      speakingDot.classList.remove("on");
+    }
+
+    function pickVoice() {
+      const voices = window.speechSynthesis.getVoices();
+      if (!voices.length) return null;
+      const prefer = [/en-IN/i, /en-GB/i, /en-US/i, /English/i];
+      for (const re of prefer) {
+        const v = voices.find((x) => re.test(x.lang) || re.test(x.name));
+        if (v) return v;
+      }
+      return voices[0];
+    }
+
+    if (canSpeak) {
+      window.speechSynthesis.getVoices();
+      window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+    }
+
+    function speak(text) {
+      return new Promise((resolve) => {
+        if (!canSpeak || !voiceEnabledEl.checked || !text) {
+          resolve();
+          return;
+        }
+        if (canSpeak) window.speechSynthesis.cancel();
+        speakingDot.classList.remove("on");
+
+        const u = new SpeechSynthesisUtterance(text);
+        u.rate = parseFloat(voiceRateEl.value) || 1.15;
+        u.pitch = 1;
+        u.volume = 1;
+        const voice = pickVoice();
+        if (voice) u.voice = voice;
+        u.lang = (voice && voice.lang) || "en-US";
+
+        let done = false;
+        let watchdog = null;
+        const finish = () => {
+          if (done) return;
+          done = true;
+          if (watchdog) clearTimeout(watchdog);
+          speakingDot.classList.remove("on");
+          resolve();
+        };
+
+        speakingDot.classList.add("on");
+        u.onend = finish;
+        u.onerror = finish;
+        watchdog = setTimeout(finish, Math.min(55000, Math.max(7000, text.split(/\s+/).length * 400)));
+        window.speechSynthesis.speak(u);
+      });
+    }
+
+    async function narrate(captionEl, text, spoken) {
+      captionEl.textContent = text;
+      await speak(spoken || text);
+    }
+
+    let vlanRunning = false;
+    let ipsecRunning = false;
+    let multiRunning = false;
+    let learnRunning = false;
+
+    const tabs = document.querySelectorAll(".tabs button");
+    const panels = {
+      vlan: document.getElementById("vlan-panel"),
+      ipsec: document.getElementById("ipsec-panel"),
+      compare: document.getElementById("compare-panel"),
+      multi: document.getElementById("multi-panel"),
+      learn: document.getElementById("learn-panel"),
+    };
+
+    tabs.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        stopVoice();
+        vlanRunning = false;
+        ipsecRunning = false;
+        multiRunning = false;
+        learnRunning = false;
+        tabs.forEach((b) => {
+          b.classList.remove("active");
+          b.setAttribute("aria-selected", "false");
+        });
+        btn.classList.add("active");
+        btn.setAttribute("aria-selected", "true");
+        Object.keys(panels).forEach((k) => panels[k].classList.remove("active"));
+        panels[btn.dataset.tab].classList.add("active");
+      });
+    });
+
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+    const vlanCaption = document.getElementById("vlan-caption");
+    const vlanStep = document.getElementById("vlan-step");
+    const ports = ["p1", "p2", "p3", "p4", "p5"].map((id) => document.getElementById(id));
+    const hosts = [1, 2, 3, 4, 5].map((n) => document.getElementById("host" + n));
+    const barrier = document.getElementById("vlan-barrier");
+    const barrierLabel = document.getElementById("vlan-barrier-label");
+    const vlanPkt = document.getElementById("vlan-pkt");
+
+    function vlanReset() {
+      vlanRunning = false;
+      stopVoice();
+      ports.forEach((p) => (p.className = "port"));
+      hosts.forEach((h) => h.classList.remove("show-tag"));
+      barrier.classList.remove("on");
+      barrierLabel.classList.remove("on");
+      vlanPkt.style.opacity = "0";
+      vlanPkt.className = "packet";
+      vlanStep.textContent = "Step 0 / 7 — Ready";
+      vlanCaption.innerHTML =
+        "Press <strong>Play with voice</strong> for a full narrated walkthrough (7 steps). Unmute your speakers.";
+    }
+
+    async function animatePkt(el, from, to, color, duration, tagged) {
+      el.style.background = color;
+      el.style.color = color;
+      el.className = tagged ? "packet tagged" : "packet";
+      el.style.left = from.x + "px";
+      el.style.top = from.y + "px";
+      el.style.opacity = "1";
+      el.style.transition = `left ${duration}ms linear, top ${duration}ms linear`;
+      await sleep(20);
+      el.style.left = to.x + "px";
+      el.style.top = to.y + "px";
+      await sleep(duration);
+    }
+
+    async function vlanPlay() {
+      if (vlanRunning) return;
+      vlanRunning = true;
+      vlanReset();
+      vlanRunning = true;
+      const stage = document.getElementById("vlan-stage");
+
+      vlanStep.textContent = "Step 1 / 7 — Why VLANs exist";
+      await narrate(
+        vlanCaption,
+        "A flat LAN means every device hears every broadcast. As the network grows, that wastes bandwidth and makes isolation hard.",
+        "Step one. Why V-LANs exist. On a flat LAN, every device shares one broadcast domain. ARP requests, DHCP discovers, and other broadcasts reach everyone. As you add more hosts, the noise grows, and you cannot easily separate guests from servers without buying separate switches."
+      );
+      if (!vlanRunning) return;
+
+      vlanStep.textContent = "Step 2 / 7 — One big LAN";
+      await narrate(
+        vlanCaption,
+        "Without VLANs, every port is in the same broadcast domain — one logical network on this switch.",
+        "Step two. Without V-LANs configured, every port on this switch is in the same broadcast domain. It behaves like one big LAN. Any host can flood broadcasts to all the others."
+      );
+      if (!vlanRunning) return;
+
+      vlanStep.textContent = "Step 3 / 7 — Assign VLANs to ports";
+      ports[0].classList.add("vlan10");
+      ports[1].classList.add("vlan10");
+      await sleep(300);
+      ports[2].classList.add("vlan20");
+      ports[3].classList.add("vlan20");
+      hosts.slice(0, 4).forEach((h) => h.classList.add("show-tag"));
+      await narrate(
+        vlanCaption,
+        "Access ports: 1–2 → VLAN 10 (users). 3–4 → VLAN 20 (servers). Same hardware, two logical networks — usually two IP subnets.",
+        "Step three. We assign access ports. Ports one and two join V-LAN ten for users, shown in teal. Ports three and four join V-LAN twenty for servers, shown in blue. Same physical switch — two logical networks. In real designs, each V-LAN almost always maps to its own I-P subnet."
+      );
+      if (!vlanRunning) return;
+
+      vlanStep.textContent = "Step 4 / 7 — Isolation";
+      barrier.classList.add("on");
+      barrierLabel.classList.add("on");
+      await narrate(
+        vlanCaption,
+        "Broadcast from PC-A (VLAN 10) reaches PC-B, but is blocked from VLAN 20. Separate broadcast domains = better security and less noise.",
+        "Step four. Isolation. A broadcast from PC A on V-LAN ten reaches PC B on the same V-LAN, but is blocked from V-LAN twenty. That stops guests or compromised PCs from casually scanning another group at layer two. V-LANs create separate broadcast domains."
+      );
+      if (!vlanRunning) return;
+
+      const w = stage.clientWidth;
+      const h = stage.clientHeight;
+      await animatePkt(vlanPkt, { x: w * 0.08, y: h * 0.12 }, { x: w * 0.28, y: h * 0.12 }, "#2dd4bf", 900, false);
+      await sleep(250);
+      await animatePkt(vlanPkt, { x: w * 0.28, y: h * 0.12 }, { x: w * 0.48, y: h * 0.2 }, "#2dd4bf", 600, false);
+      vlanPkt.style.opacity = "0";
+      vlanPkt.style.transition = "opacity 0.3s";
+      await sleep(400);
+      if (!vlanRunning) return;
+
+      vlanStep.textContent = "Step 5 / 7 — Same VLAN can talk";
+      vlanCaption.textContent =
+        "PC-C → PC-D on VLAN 20 is allowed. Same VLAN, same broadcast domain — Layer-2 switching works normally.";
+      const s5 = speak(
+        "Step five. Same V-LAN can talk. PC C sends traffic to PC D on V-LAN twenty. Because they share the same V-LAN, the switch forwards it at layer two. No router is needed inside one V-LAN."
+      );
+      await animatePkt(vlanPkt, { x: w * 0.72, y: h * 0.12 }, { x: w * 0.88, y: h * 0.12 }, "#38bdf8", 900, false);
+      await s5;
+      if (!vlanRunning) return;
+
+      vlanStep.textContent = "Step 6 / 7 — Trunk + 802.1Q tag";
+      ports[4].classList.add("trunk");
+      hosts[4].classList.add("show-tag");
+      await narrate(
+        vlanCaption,
+        "Trunk uplink carries many VLANs. 802.1Q inserts a tag with the VLAN ID so the router or next switch knows membership.",
+        "Step six. The uplink becomes a trunk. Trunks carry many V-LANs on one link. The eight-oh-two-dot-one-Q tag adds the V-LAN I-D to the Ethernet frame so the router or next switch knows which V-LAN the frame belongs to. Access ports toward PCs stay untagged."
+      );
+      if (!vlanRunning) return;
+      await animatePkt(vlanPkt, { x: w * 0.15, y: h * 0.15 }, { x: w * 0.48, y: h * 0.42 }, "#2dd4bf", 700, false);
+      await animatePkt(vlanPkt, { x: w * 0.48, y: h * 0.42 }, { x: w * 0.48, y: h * 0.78 }, "#fbbf24", 800, true);
+
+      vlanStep.textContent = "Step 7 / 7 — Inter-VLAN routing";
+      await narrate(
+        vlanCaption,
+        "Summary: VLANs segment Layer 2. To talk between VLANs you need Layer 3 (router, L3 switch SVI, or firewall) — and that is where ACLs belong.",
+        "Step seven. Summary. V-LANs segment layer-two domains on one switch. Trunks carry tagged V-LANs between devices. Hosts in different V-LANs cannot talk until a layer-three device routes between them — a router-on-a-stick, an L-three switch with S-V-Is, or a firewall. That hop is also where you apply access control lists. Remember: V-LANs isolate — they do not encrypt."
+      );
+      vlanStep.textContent = "Step 7 / 7 — Done";
+      vlanPkt.style.opacity = "0";
+      vlanRunning = false;
+    }
+
+    document.getElementById("vlan-play").addEventListener("click", vlanPlay);
+    document.getElementById("vlan-reset").addEventListener("click", vlanReset);
+
+    const ipsecCaption = document.getElementById("ipsec-caption");
+    const ipsecStep = document.getElementById("ipsec-step");
+    const tunnel = document.getElementById("tunnel");
+    const tunnelBadge = document.getElementById("tunnel-badge");
+    const lockIcon = document.getElementById("lock-icon");
+    const plainPkt = document.getElementById("plain-pkt");
+    const encPkt = document.getElementById("enc-pkt");
+    const espLayers = document.getElementById("esp-layers");
+
+    function ipsecReset() {
+      ipsecRunning = false;
+      stopVoice();
+      tunnel.classList.remove("on");
+      tunnelBadge.classList.remove("on");
+      lockIcon.classList.remove("on");
+      espLayers.classList.remove("on");
+      plainPkt.style.opacity = "0";
+      encPkt.style.opacity = "0";
+      plainPkt.style.transition = "none";
+      encPkt.style.transition = "none";
+      ipsecStep.textContent = "Step 0 / 7 — Ready";
+      ipsecCaption.innerHTML =
+        "Press <strong>Play with voice</strong> for a full narrated walkthrough (7 steps). Unmute your speakers.";
+    }
+
+    function place(el, xPct, yPct) {
+      const stage = document.getElementById("ipsec-stage");
+      el.style.left = stage.clientWidth * xPct + "px";
+      el.style.top = stage.clientHeight * yPct + "px";
+    }
+
+    async function moveEl(el, xPct, yPct, duration) {
+      const stage = document.getElementById("ipsec-stage");
+      el.style.transition = `left ${duration}ms ease-in-out, top ${duration}ms ease-in-out, opacity 0.3s`;
+      el.style.left = stage.clientWidth * xPct + "px";
+      el.style.top = stage.clientHeight * yPct + "px";
+      await sleep(duration);
+    }
+
+    async function ipsecPlay() {
+      if (ipsecRunning) return;
+      ipsecRunning = true;
+      ipsecReset();
+      ipsecRunning = true;
+
+      ipsecStep.textContent = "Step 1 / 7 — Why IPsec exists";
+      await narrate(
+        ipsecCaption,
+        "The Internet is untrusted. Without protection, packets between offices can be read or altered. IPsec builds a secure path over that unsafe network.",
+        "Step one. Why I-P-sec exists. When two sites connect across the Internet, anyone on the path could sniff or tamper with packets. Leased lines are expensive. I-P-sec lets you build a virtual private link using cryptography over the public network."
+      );
+      if (!ipsecRunning) return;
+
+      ipsecStep.textContent = "Step 2 / 7 — Cleartext on LAN";
+      place(plainPkt, 0.02, 0.42);
+      plainPkt.style.opacity = "1";
+      const n2 = narrate(
+        ipsecCaption,
+        "A host at Site A sends a normal IP packet toward Site B. On the trusted LAN it is still cleartext.",
+        "Step two. A host at Site A sends a normal I-P packet toward Site B. Inside the LAN the packet is still cleartext — readable if captured on that local network. Protection usually starts at the VPN gateway."
+      );
+      await moveEl(plainPkt, 0.22, 0.42, 1000);
+      await n2;
+      if (!ipsecRunning) return;
+
+      ipsecStep.textContent = "Step 3 / 7 — IKE & Security Association";
+      lockIcon.classList.add("on");
+      tunnel.classList.add("on");
+      tunnelBadge.classList.add("on");
+      await narrate(
+        ipsecCaption,
+        "Gateways use IKE to authenticate (PSK or certificates), agree on algorithms, and create Security Associations (SAs) with keys and lifetimes.",
+        "Step three. The VPN gateways run IKE — Internet Key Exchange. They authenticate each other with a pre-shared key or certificates, agree on encryption and hashing algorithms, and create Security Associations. Think of an S-A as a contract: which keys, which algorithms, and how long they last. IKEv2 is the modern version."
+      );
+      if (!ipsecRunning) return;
+
+      ipsecStep.textContent = "Step 4 / 7 — Encrypt with ESP (tunnel mode)";
+      plainPkt.style.opacity = "0";
+      place(encPkt, 0.28, 0.42);
+      encPkt.style.opacity = "1";
+      espLayers.classList.add("on");
+      await narrate(
+        ipsecCaption,
+        "ESP encrypts the original packet. Tunnel mode adds a new outer IP header (gateway → gateway), ESP header, encrypted payload, trailer, and ICV.",
+        "Step four. Encrypt with E-S-P. In tunnel mode — common for site-to-site — the gateway wraps the whole original I-P packet. You get a new outer I-P header between the gateways, an E-S-P header, the encrypted original packet, then a trailer and integrity check value. Outsiders cannot read the inner addresses or data."
+      );
+      if (!ipsecRunning) return;
+
+      ipsecStep.textContent = "Step 5 / 7 — Cross the Internet";
+      ipsecCaption.textContent =
+        "Observers only see encrypted ESP (often UDP 4500 with NAT-T) between gateway public IPs — not inner LAN IPs or payload.";
+      const n5 = speak(
+        "Step five. The encrypted packet crosses the Internet inside the tunnel. An observer only sees E-S-P traffic between the two gateway public I-P addresses — not the inner LAN addresses or the application data. If N-A-T is in the path, N-A-T traversal encapsulates E-S-P in U-D-P port forty-five hundred."
+      );
+      await moveEl(encPkt, 0.62, 0.42, 1800);
+      await n5;
+      if (!ipsecRunning) return;
+
+      ipsecStep.textContent = "Step 6 / 7 — Decrypt at far gateway";
+      encPkt.style.opacity = "0";
+      place(plainPkt, 0.72, 0.42);
+      plainPkt.style.opacity = "1";
+      const n6 = narrate(
+        ipsecCaption,
+        "Site B verifies integrity, decrypts ESP, strips the outer header, and delivers the original IP packet to the branch LAN.",
+        "Step six. At Site B, the gateway looks up the S-A using the S-P-I, verifies integrity, decrypts E-S-P, strips the outer header, and delivers the original I-P packet to the branch LAN. Cleartext again — but only on the trusted side."
+      );
+      await moveEl(plainPkt, 0.88, 0.42, 900);
+      await n6;
+      if (!ipsecRunning) return;
+
+      ipsecStep.textContent = "Step 7 / 7 — Policies & best practice";
+      await narrate(
+        ipsecCaption,
+        "Summary: IPsec = confidentiality + integrity + peer auth. Define interesting traffic carefully; prefer IKEv2, strong ciphers (e.g. AES-GCM), and PFS.",
+        "Step seven. Summary. I-P-sec gives confidentiality, integrity, and peer authentication. Policies define interesting traffic — which subnets enter the tunnel. Prefer IKEv2, modern ciphers such as A-E-S-G-C-M, strong Diffie-Hellman groups, and perfect forward secrecy. Rotate keys and keep gateway software updated. I-P-sec protects data in transit — not files sitting on a disk."
+      );
+      ipsecStep.textContent = "Step 7 / 7 — Done";
+      ipsecRunning = false;
+    }
+
+    document.getElementById("ipsec-play").addEventListener("click", ipsecPlay);
+    document.getElementById("ipsec-reset").addEventListener("click", ipsecReset);
+
+    const compareCaption = document.getElementById("compare-caption");
+    document.getElementById("compare-play").addEventListener("click", async () => {
+      stopVoice();
+      await narrate(
+        compareCaption,
+        "VLANs segment Layer-2 broadcast domains inside a site. IPsec encrypts IP traffic across untrusted networks. Use both: VLANs locally, IPsec between sites.",
+        "V-LAN versus I-P-sec. A V-LAN is about logical segmentation at layer two. It decides who shares a broadcast domain inside your campus — for example users, servers, and guests. V-LANs improve isolation and reduce broadcast noise, but they do not encrypt traffic. I-P-sec is about cryptography at layer three. It encrypts and authenticates I-P packets so two sites, or a remote user and HQ, can talk safely across the Internet. In a typical design you use both: V-LANs organize each site, and I-P-sec protects the selected subnets between sites. Interview tip: V-LANs separate who can hear broadcasts; I-P-sec protects packets that must travel across networks you do not trust."
+      );
+    });
+    document.getElementById("compare-stop").addEventListener("click", () => {
+      stopVoice();
+      compareCaption.innerHTML =
+        "Press <strong>Explain with voice</strong> for a spoken summary of how VLAN and IPsec differ and how they complement each other.";
+    });
+
+    /* ——— Multi-tunnel / IP addressing ——— */
+    const multiCaption = document.getElementById("multi-caption");
+    const multiStep = document.getElementById("multi-step");
+    const multiInner = document.getElementById("multi-inner");
+    const multiOuter = document.getElementById("multi-outer");
+    const pathA = document.getElementById("path-tunnel-a");
+    const pathB = document.getElementById("path-tunnel-b");
+    const pathC = document.getElementById("path-tunnel-c");
+    const lblA = document.getElementById("lbl-tunnel-a");
+    const lblB = document.getElementById("lbl-tunnel-b");
+    const lblC = document.getElementById("lbl-tunnel-c");
+    const nodeHq = document.getElementById("node-hq");
+    const nodeBranchA = document.getElementById("node-branch-a");
+    const nodeBranchB = document.getElementById("node-branch-b");
+    const nodeCloud = document.getElementById("node-cloud");
+    const polA = document.getElementById("pol-a");
+    const polB = document.getElementById("pol-b");
+    const polC = document.getElementById("pol-c");
+
+    function clearPolicyHits() {
+      [polA, polB, polC].forEach((r) => r.classList.remove("hit"));
+      [nodeHq, nodeBranchA, nodeBranchB, nodeCloud].forEach((n) => {
+        n.classList.remove("gw-active", "match");
+      });
+    }
+
+    function setTunnels(active) {
+      const map = { a: pathA, b: pathB, c: pathC };
+      const lbl = { a: lblA, b: lblB, c: lblC };
+      ["a", "b", "c"].forEach((k) => {
+        const on = !active || active.includes(k);
+        map[k].classList.toggle("on", on);
+        lbl[k].classList.toggle("on", on);
+      });
+    }
+
+    function multiReset() {
+      multiRunning = false;
+      stopVoice();
+      clearPolicyHits();
+      setTunnels(null);
+      [pathA, pathB, pathC].forEach((p) => p.classList.remove("on"));
+      [lblA, lblB, lblC].forEach((l) => l.classList.remove("on"));
+      multiInner.style.opacity = "0";
+      multiOuter.style.opacity = "0";
+      multiInner.textContent = "10.1.1.50 → 10.2.1.100";
+      multiOuter.textContent = "203.0.113.10 → 198.51.100.20 | ESP";
+      multiStep.textContent = "Step 0 / 10 — Ready";
+      multiCaption.innerHTML =
+        "Press <strong>Play with voice</strong> — inner/outer IPs, CIDR, slicing, and three tunnels (10 steps).";
+      document.querySelectorAll(".cidr-table tbody tr").forEach((r) => r.classList.remove("hl"));
+    }
+
+    function placeOnPath(el, pathEl, t) {
+      const stage = document.getElementById("multi-stage");
+      const len = pathEl.getTotalLength();
+      const pt = pathEl.getPointAtLength(Math.max(0, Math.min(1, t)) * len);
+      el.style.left = (pt.x / 820) * stage.clientWidth + "px";
+      el.style.top = (pt.y / 440) * stage.clientHeight + "px";
+    }
+
+    async function animateAlongPath(el, pathEl, duration, reverse) {
+      const len = pathEl.getTotalLength();
+      el.style.opacity = "1";
+      const start = performance.now();
+      await new Promise((resolve) => {
+        function frame(now) {
+          if (!multiRunning) {
+            resolve();
+            return;
+          }
+          const t = Math.min(1, (now - start) / duration);
+          const frac = reverse ? 1 - t : t;
+          const pt = pathEl.getPointAtLength(frac * len);
+          const stage = document.getElementById("multi-stage");
+          el.style.left = (pt.x / 820) * stage.clientWidth + "px";
+          el.style.top = (pt.y / 440) * stage.clientHeight + "px";
+          if (t < 1) requestAnimationFrame(frame);
+          else resolve();
+        }
+        requestAnimationFrame(frame);
+      });
+    }
+
+    async function multiPlay() {
+      if (multiRunning) return;
+      multiRunning = true;
+      multiReset();
+      multiRunning = true;
+
+      multiStep.textContent = "Step 1 / 10 — Inner vs outer IP";
+      nodeHq.classList.add("gw-active");
+      await narrate(
+        multiCaption,
+        "Hosts use private IPs (10.x) on the LAN. Firewalls use private IPs inside and public IPs on the Internet WAN.",
+        "Step one. I-P addressing. Inside each site, hosts use private addresses — for example ten dot one dot one dot fifty at H-Q. The firewall has a LAN address on the inside and a public W-A-N address on the Internet — two hundred three dot zero dot one thirteen dot ten. Remote sites have their own private subnets and their own public W-A-N addresses. The Internet only routes the public addresses."
+      );
+      if (!multiRunning) return;
+
+      multiStep.textContent = "Step 2 / 10 — Three tunnels up";
+      setTunnels(["a", "b", "c"]);
+      await narrate(
+        multiCaption,
+        "HQ has three separate IPsec tunnels: to Branch A, Branch B, and a cloud partner. Each tunnel has its own IKE session, keys, and policy.",
+        "Step two. Multiple tunnels. From one H-Q firewall you can run several I-P-sec tunnels at the same time. Tunnel A goes to Branch A. Tunnel B goes to Branch B. Tunnel C goes to a cloud partner. Each tunnel is a separate security association — its own keys and lifetimes. They can all be up simultaneously over the same Internet link."
+      );
+      if (!multiRunning) return;
+
+      multiStep.textContent = "Step 3 / 10 — Policy picks Tunnel A";
+      clearPolicyHits();
+      setTunnels(["a"]);
+      polA.classList.add("hit");
+      nodeBranchA.classList.add("match");
+      multiInner.textContent = "10.1.1.50 → 10.2.1.100";
+      placeOnPath(multiInner, pathA, 0);
+      multiInner.style.opacity = "1";
+      await narrate(
+        multiCaption,
+        "Destination 10.2.1.100 is in 10.2.0.0/16 → matches Tunnel A policy (not B or C).",
+        "Step three. Policy selection. A user at H-Q sends to ten dot two dot one dot one hundred. The firewall checks I-P-sec policies. Destination ten dot two matches Tunnel A — the ten dot two dot zero dot zero slash sixteen network at Branch A. It does not match Tunnel B or C. Only Tunnel A is used for this flow."
+      );
+      if (!multiRunning) return;
+
+      multiStep.textContent = "Step 4 / 10 — Outbound (encrypt)";
+      multiOuter.textContent = "203.0.113.10 → 198.51.100.20 | ESP";
+      placeOnPath(multiOuter, pathA, 0);
+      const n4 = narrate(
+        multiCaption,
+        "Gateway encrypts the inner packet and sends ESP with outer IPs: 203.0.113.10 → 198.51.100.20.",
+        "Step four. Outbound encryption. The H-Q gateway encrypts the original packet. In tunnel mode it adds a new outer I-P header: source two hundred three dot zero dot one thirteen dot ten, destination one ninety-eight dot fifty-one dot one hundred dot twenty — the public address of Branch A. The inner ten dot one to ten dot two addresses are inside the encrypted payload."
+      );
+      multiInner.style.opacity = "0";
+      multiOuter.style.opacity = "1";
+      await animateAlongPath(multiOuter, pathA, 2200, false);
+      await n4;
+      if (!multiRunning) return;
+
+      multiStep.textContent = "Step 5 / 10 — Arrives Branch A";
+      multiOuter.style.opacity = "0";
+      multiInner.style.opacity = "1";
+      placeOnPath(multiInner, pathA, 1);
+      await narrate(
+        multiCaption,
+        "Branch A decrypts, strips the outer header, and delivers 10.1.1.50 → 10.2.1.100 on the local LAN.",
+        "Step five. Inbound at Branch A. The Branch A firewall receives E-S-P, finds the correct S-A using the S-P-I, decrypts, and removes the outer header. It forwards the inner packet to ten dot two dot one dot one hundred on the local LAN. To the server, it looks like a normal private I-P packet from H-Q."
+      );
+      if (!multiRunning) return;
+
+      multiStep.textContent = "Step 6 / 10 — Return on same tunnel";
+      multiInner.textContent = "10.2.1.100 → 10.1.1.50";
+      placeOnPath(multiInner, pathA, 1);
+      const n6 = narrate(
+        multiCaption,
+        "Reply matches reverse policy on Tunnel A. Return traffic uses the paired SA (opposite direction) on the same tunnel.",
+        "Step six. Return traffic. The server replies from ten dot two dot one dot one hundred to ten dot one dot one dot fifty. Branch A matches the reverse policy on Tunnel A, encrypts again, and sends outer I-P from one ninety-eight dot fifty-one dot one hundred dot twenty back to two hundred three dot zero dot one thirteen dot ten. H-Q decrypts and delivers to the user. Same tunnel, opposite direction security association."
+      );
+      await animateAlongPath(multiInner, pathA, 1800, true);
+      await n6;
+      if (!multiRunning) return;
+
+      multiStep.textContent = "Step 7 / 10 — Different dest → Tunnel B";
+      clearPolicyHits();
+      setTunnels(["b"]);
+      polB.classList.add("hit");
+      nodeBranchB.classList.add("match");
+      multiInner.style.opacity = "0";
+      multiOuter.textContent = "203.0.113.10 → 198.51.100.30 | ESP";
+      placeOnPath(multiOuter, pathB, 0);
+      multiOuter.style.opacity = "1";
+      const n7 = narrate(
+        multiCaption,
+        "New flow to 10.3.1.50 matches Tunnel B. Outer header now uses peer 198.51.100.30 — a different tunnel, different keys.",
+        "Step seven. Another destination, another tunnel. Traffic to ten dot three dot one dot fifty matches Tunnel B. The outer header now points to one ninety-eight dot fifty-one dot one hundred dot thirty — Branch B's public I-P. Same H-Q firewall, but a completely separate tunnel and key material. That is how multiple tunnels coexist without mixing traffic."
+      );
+      await animateAlongPath(multiOuter, pathB, 2200, false);
+      await n7;
+      if (!multiRunning) return;
+
+      multiStep.textContent = "Step 8 / 10 — CIDR & routing table";
+      const cidrRows = document.querySelectorAll(".cidr-table tbody tr");
+      cidrRows.forEach((r) => r.classList.remove("hl"));
+      cidrRows[1]?.classList.add("hl");
+      await narrate(
+        multiCaption,
+        "Routers use prefix length (/24, /16…) for longest-match routing. 10.2.1.100 matches 10.2.0.0/16 toward Branch A.",
+        "Step eight. CIDR. Slash notation tells how many bits are the network part. The routing table and I-P-sec policy both use prefixes. Ten dot two dot one dot one hundred matches ten dot two dot zero dot zero slash sixteen — that is why Tunnel A is chosen, not a narrower or wrong route."
+      );
+      if (!multiRunning) return;
+
+      multiStep.textContent = "Step 9 / 10 — Network slicing";
+      setTunnels(["a", "b", "c"]);
+      await narrate(
+        multiCaption,
+        "Each tunnel + subnet is a logical slice on shared Internet links: separate keys, policies, and traffic — like VLAN slices on a switch.",
+        "Step nine. Network slicing view. Three tunnels on one H-Q firewall are three secure slices over the same physical Internet. Each slice has its own peer, keys, and allowed subnets — similar to V-L-A-N slices at layer two or V-R-F slices at layer three. Five G extends the idea with radio and core slice IDs."
+      );
+      if (!multiRunning) return;
+
+      multiStep.textContent = "Step 10 / 10 — Summary";
+      multiOuter.style.opacity = "0";
+      await narrate(
+        multiCaption,
+        "Summary: private IPs inside; public IPs on the outer ESP header; routing + IPsec policy choose the tunnel; each peer has its own SA in and out.",
+        "Step ten. Summary. Private I-P addresses identify hosts inside each site. Public I-P addresses appear on the outer encrypted header between gateways. Routing and prefix rules steer traffic; I-P-sec policy picks the tunnel. Packets go out encrypted on the matching tunnel and return decrypted on the trusted LAN."
+      );
+      multiStep.textContent = "Step 10 / 10 — Done";
+      multiRunning = false;
+    }
+
+    document.getElementById("multi-play").addEventListener("click", multiPlay);
+    document.getElementById("multi-reset").addEventListener("click", multiReset);
+
+    /* ——— 10 concepts (VLAN-style diagram) ——— */
+    const learnCaption = document.getElementById("learn-caption");
+    const learnStep = document.getElementById("learn-step");
+    const learnTitle = document.getElementById("learn-title");
+    const learnSub = document.getElementById("learn-sub");
+    const conceptProgress = document.getElementById("concept-progress");
+    const learnDiag = document.getElementById("learn-diag");
+    const learnPkt = document.getElementById("learn-pkt");
+    const learnBarrier = document.getElementById("learn-barrier");
+    const learnBarrierLabel = document.getElementById("learn-barrier-label");
+    const learnMask = document.getElementById("learn-mask");
+    const learnPorts = ["lp1", "lp2", "lp3", "lp4", "lp5"].map((id) => document.getElementById(id));
+    const learnHosts = ["lh1", "lh2", "lh3", "lh4", "lh5"].map((id) => document.getElementById(id));
+    const learnChips = ["chip-v10", "chip-v20", "chip-v30", "chip-vrf"].map((id) => document.getElementById(id));
+
+    const learnScripts = [
+      {
+        title: "1 — IP address on each PC",
+        sub: "Each PC gets a unique IP on the LAN — shown under PC-A in the same layout as the VLAN animation.",
+        cap: "PC-A is 10.1.1.50 — four decimal numbers (octets) identify this host on network 10.1.1.0/24.",
+        voice:
+          "Concept one. Look at P-C A on the switch diagram. Its I-P is ten dot one dot one dot fifty — four octets. That address belongs to this host on this LAN segment.",
+        run: async () => {
+          learnHosts[0].classList.add("glow", "show-ip");
+          await sleep(400);
+          learnHosts[1].classList.add("show-ip");
+          await sleep(300);
+          learnHosts[2].classList.add("show-ip");
+          learnHosts[3].classList.add("show-ip");
+        },
+      },
+      {
+        title: "2 — Subnet /24 on the LAN",
+        sub: "PC-A and PC-B share 10.1.1.x — same network portion; the last octet is the host ID.",
+        cap: "Mask /24: first three octets = network (10.1.1), last octet = host (.50, .20).",
+        voice:
+          "Concept two. Slash twenty-four means P-C A and P-C B are both in ten dot one dot one dot zero network. The switch delivers locally when the destination shares that network.",
+        run: async () => {
+          learnHosts[0].classList.add("show-ip", "glow");
+          learnHosts[1].classList.add("show-ip", "glow");
+          learnMask.classList.add("on");
+        },
+      },
+      {
+        title: "3 — Default gateway (router)",
+        sub: "Traffic to another subnet goes PC → switch → uplink router (10.1.1.1).",
+        cap: "PC-A sends to 10.2.1.40 (PC-D) via the default gateway on the trunk port.",
+        voice:
+          "Concept three. P-C A cannot reach ten dot two dot one dot forty directly. The packet goes through the switch down to the uplink router — the default gateway at ten dot one dot one dot one.",
+        run: async () => {
+          learnHosts[4].classList.add("glow", "show-ip");
+          await learnMovePkt(
+            { x: 0.08, y: 0.12 },
+            { x: 0.48, y: 0.78 },
+            "inner",
+            "→ GW",
+            1400
+          );
+        },
+      },
+      {
+        title: "4 — Same subnet (PC-A → PC-B)",
+        sub: "10.1.1.50 to 10.1.1.20 stays on the LAN — switch forwards at Layer 2.",
+        cap: "No router needed: ARP + switch fabric between ports 1 and 2.",
+        voice:
+          "Concept four. From P-C A to P-C B on the same subnet, the switch forwards in the middle. Watch the packet move across the top — no router involved.",
+        run: async () => {
+          learnHosts[0].classList.add("glow");
+          learnHosts[1].classList.add("glow");
+          await learnMovePkt({ x: 0.08, y: 0.12 }, { x: 0.28, y: 0.12 }, "inner", "ARP", 1000);
+        },
+      },
+      {
+        title: "5 — Private vs public IP",
+        sub: "Private IPs on PCs; public IP on the router WAN (203.0.113.10).",
+        cap: "LAN uses 10.x; Internet only sees the router’s public address.",
+        voice:
+          "Concept five. P-Cs use private ten dot addresses. The router shows both L-A-N ten dot one dot one dot one and W-A-N two oh three dot zero dot one thirteen dot ten. The Internet routes the public side.",
+        run: async () => {
+          learnHosts.slice(0, 4).forEach((h) => h.classList.add("show-ip"));
+          learnHosts[4].classList.add("glow", "show-ip");
+          document.getElementById("lip-gw").textContent = "LAN 10.1.1.1 · WAN 203.0.113.10";
+        },
+      },
+      {
+        title: "6 — NAT at the router",
+        sub: "Outbound packet leaves the site with the public source IP after NAT.",
+        cap: "Inner 10.1.1.50 becomes source 203.0.113.10 toward the Internet.",
+        voice:
+          "Concept six. The packet goes to the uplink. N-A-T rewrites the source from private to public as it exits toward the Internet cloud below.",
+        run: async () => {
+          learnDiag.classList.add("show-wan", "tall");
+          learnHosts[4].classList.add("glow");
+          await learnMovePkt({ x: 0.15, y: 0.15 }, { x: 0.48, y: 0.55 }, "inner", "10.1.1.50", 700);
+          learnPkt.className = "learn-pkt nat";
+          learnPkt.textContent = "203.0.113.10";
+          await learnMovePkt({ x: 0.48, y: 0.55 }, { x: 0.55, y: 0.88 }, "nat", "NAT", 900);
+        },
+      },
+      {
+        title: "7 — VLAN slice (ports colored)",
+        sub: "Ports 1–2 VLAN 10 (teal), 3–4 VLAN 20 (blue) — like the VLAN tab animation.",
+        cap: "Broadcast from VLAN 10 does not cross into VLAN 20.",
+        voice:
+          "Concept seven. V-L-A-N slicing on the same switch. Ports one and two are V-L-A-N ten in teal. Ports three and four are V-L-A-N twenty in blue. The barrier shows isolated broadcast domains.",
+        run: async () => {
+          learnPorts[0].classList.add("vlan10");
+          learnPorts[1].classList.add("vlan10");
+          learnPorts[2].classList.add("vlan20");
+          learnPorts[3].classList.add("vlan20");
+          learnBarrier.classList.add("on");
+          learnBarrierLabel.classList.add("on");
+          document.getElementById("chip-v10").classList.add("on");
+          document.getElementById("chip-v20").classList.add("on");
+          await learnMovePkt({ x: 0.08, y: 0.12 }, { x: 0.28, y: 0.12 }, "inner", "V10", 800);
+          learnPkt.style.opacity = "0";
+          await learnMovePkt({ x: 0.28, y: 0.12 }, { x: 0.52, y: 0.18 }, "inner", "blocked", 500);
+        },
+      },
+      {
+        title: "8 — VRF / L3 slice at router",
+        sub: "Router keeps separate routing tables (VRF) for different slices — traffic exits uplink by VRF.",
+        cap: "Corporate vs guest traffic can use the same switch but different L3 policies.",
+        voice:
+          "Concept eight. At layer three, the router can run V-R-F slices — separate routing tables. Traffic still uses the same physical uplink, but policies and tables stay apart.",
+        run: async () => {
+          learnPorts[4].classList.add("trunk");
+          learnHosts[4].classList.add("glow");
+          document.getElementById("chip-vrf").classList.add("on");
+          await learnMovePkt({ x: 0.22, y: 0.12 }, { x: 0.48, y: 0.78 }, "inner", "VRF-A", 900);
+          learnPkt.textContent = "VRF-B";
+          await learnMovePkt({ x: 0.72, y: 0.12 }, { x: 0.48, y: 0.78 }, "inner", "VRF-B", 900);
+        },
+      },
+      {
+        title: "9 — IPsec tunnel to branch",
+        sub: "Encrypted path from router over Internet to remote site 10.2.1.100.",
+        cap: "Inner IP stays private; outer header uses public gateway IPs in ESP.",
+        voice:
+          "Concept nine. I-P-sec tunnel from the router across the Internet to the branch P-C. The packet on the wire is encrypted — a secure slice over the public network.",
+        run: async () => {
+          learnDiag.classList.add("show-wan", "tall");
+          document.getElementById("learn-tunnel-line").classList.add("on");
+          learnHosts[4].classList.add("glow");
+          learnPkt.className = "learn-pkt inner";
+          learnPkt.textContent = "10.1.1.50→10.2.1.100";
+          await learnMovePkt({ x: 0.48, y: 0.78 }, { x: 0.52, y: 0.72 }, "inner", "", 500);
+          learnPkt.className = "learn-pkt outer";
+          learnPkt.textContent = "ESP | 203→198.51";
+          await learnMovePkt({ x: 0.52, y: 0.72 }, { x: 0.82, y: 0.88 }, "outer", "ESP", 1200);
+          learnPkt.className = "learn-pkt inner";
+          learnPkt.textContent = "deliver";
+          await learnMovePkt({ x: 0.82, y: 0.88 }, { x: 0.88, y: 0.88 }, "inner", "10.2.1.100", 600);
+        },
+      },
+      {
+        title: "10 — Network slicing (all together)",
+        sub: "VLAN + VRF + VPN slices on one switch and one router — shared hardware, separate logic.",
+        cap: "Enterprise and 5G slicing: partition QoS, security, and paths on shared infrastructure.",
+        voice:
+          "Concept ten. Network slicing big picture. V-L-A-N ten, V-L-A-N twenty, V-R-F, and V-P-N secure slice — all on this one diagram. Shared cables and devices, multiple isolated logical networks.",
+        run: async () => {
+          learnPorts[0].classList.add("vlan10");
+          learnPorts[1].classList.add("vlan10");
+          learnPorts[2].classList.add("vlan20");
+          learnPorts[3].classList.add("vlan20");
+          learnPorts[4].classList.add("trunk");
+          learnBarrier.classList.add("on");
+          learnBarrierLabel.classList.add("on");
+          learnDiag.classList.add("show-wan", "tall");
+          document.getElementById("learn-tunnel-line").classList.add("on");
+          learnChips.forEach((c) => c.classList.add("on"));
+          await learnMovePkt({ x: 0.08, y: 0.12 }, { x: 0.48, y: 0.78 }, "inner", "slice", 800);
+          learnPkt.className = "learn-pkt outer";
+          await learnMovePkt({ x: 0.48, y: 0.78 }, { x: 0.85, y: 0.88 }, "outer", "VPN", 1000);
+        },
+      },
+    ];
+
+    learnScripts.forEach((_, i) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = String(i + 1);
+      b.title = "Concept " + (i + 1);
+      b.addEventListener("click", () => playLearnConcept(i));
+      conceptProgress.appendChild(b);
+    });
+
+    const progressBtns = () => conceptProgress.querySelectorAll("button");
+
+    function setLearnHeader(idx) {
+      const s = learnScripts[idx];
+      learnTitle.textContent = s.title;
+      learnSub.textContent = s.sub;
+      progressBtns().forEach((b, i) => b.classList.toggle("on", i === idx));
+    }
+
+    function resetLearnVisuals() {
+      learnPorts.forEach((p) => (p.className = "port"));
+      learnHosts.forEach((h) => h.classList.remove("glow", "show-ip"));
+      learnBarrier.classList.remove("on");
+      learnBarrierLabel.classList.remove("on");
+      learnMask.classList.remove("on");
+      learnDiag.classList.remove("show-wan", "tall");
+      document.getElementById("learn-tunnel-line").classList.remove("on");
+      learnChips.forEach((c) => c.classList.remove("on"));
+      learnPkt.style.opacity = "0";
+      learnPkt.className = "learn-pkt inner";
+      learnPkt.textContent = "";
+      learnPkt.style.transition = "left 0.7s linear, top 0.7s linear, opacity 0.25s";
+      document.getElementById("lip-gw").textContent = "LAN 10.1.1.1 · WAN 203.0.113.10";
+    }
+
+    async function learnMovePkt(from, to, cls, label, duration) {
+      const stage = learnDiag;
+      const w = stage.clientWidth;
+      const h = stage.clientHeight;
+      learnPkt.className = "learn-pkt " + cls;
+      if (label) learnPkt.textContent = label;
+      learnPkt.style.transition = `left ${duration}ms linear, top ${duration}ms linear`;
+      learnPkt.style.left = w * from.x + "px";
+      learnPkt.style.top = h * from.y + "px";
+      learnPkt.style.opacity = label ? "1" : "0";
+      await sleep(30);
+      learnPkt.style.left = w * to.x + "px";
+      learnPkt.style.top = h * to.y + "px";
+      await sleep(duration);
+    }
+
+    function learnReset() {
+      learnRunning = false;
+      stopVoice();
+      resetLearnVisuals();
+      setLearnHeader(0);
+      learnStep.textContent = "Concept 0 / 10 — Ready";
+      learnCaption.innerHTML =
+        "Press <strong>Play all 10 with voice</strong> — same switch diagram as VLAN, with moving packets. Use the speed slider if needed.";
+    }
+
+    async function playLearnConcept(idx, fromTour) {
+      if (!fromTour) {
+        stopVoice();
+        learnRunning = true;
+      }
+      resetLearnVisuals();
+      setLearnHeader(idx);
+      learnStep.textContent = "Concept " + (idx + 1) + " / 10";
+      const step = learnScripts[idx];
+      await Promise.all([narrate(learnCaption, step.cap, step.voice), step.run()]);
+      if (!fromTour) learnRunning = false;
+    }
+
+    async function learnPlay() {
+      if (learnRunning) return;
+      stopVoice();
+      resetLearnVisuals();
+      learnRunning = true;
+      for (let i = 0; i < learnScripts.length; i++) {
+        if (!learnRunning) break;
+        await playLearnConcept(i, true);
+        await sleep(180);
+      }
+      learnStep.textContent = "Concept 10 / 10 — Done";
+      learnRunning = false;
+    }
+
+    document.getElementById("learn-play").addEventListener("click", learnPlay);
+    document.getElementById("learn-reset").addEventListener("click", learnReset);
+
+    voiceEnabledEl.addEventListener("change", () => {
+      if (!voiceEnabledEl.checked) stopVoice();
+    });
+
+    if (!canSpeak) {
+      voiceEnabledEl.checked = false;
+      voiceEnabledEl.disabled = true;
+      voiceEnabledEl.parentElement.title = "Speech synthesis is not supported in this browser.";
+    }
+
+</script>
+
+</body></html>
